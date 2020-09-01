@@ -1,2 +1,2 @@
 # Scatter
-Scatter Renderer - Vulkan ray tracer in C++
+Scatter Renderer - Vulkan RTX in C++
