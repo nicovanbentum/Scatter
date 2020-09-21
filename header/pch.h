@@ -2,6 +2,8 @@
 //std libs
 #include <iostream>
 #include <vector>
+#include <cstring>
+#include <assert.h>
 
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"
