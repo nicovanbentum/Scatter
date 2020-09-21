@@ -1,7 +1,8 @@
 #include "pch.h"
+#include "HelloTriangleApplication.h"
 
 #ifdef NDEBUG
-const bool enableValidationLayers = true;
+const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif //NDEBUG

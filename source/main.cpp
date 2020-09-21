@@ -1,5 +1,5 @@
 #include "pch.h"
-
+#include "HelloTriangleApplication.h"
 
 
 int main()
