@@ -23,7 +23,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\pch.h">
+    <ClInclude Include="header\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\HelloTriangleApplication.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
