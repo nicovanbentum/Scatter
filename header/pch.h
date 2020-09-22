@@ -5,6 +5,7 @@
 #include <cstring>
 #include <assert.h>
 #include <optional>
+#include <set>
 
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"

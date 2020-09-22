@@ -49,11 +49,19 @@ private:
 
 	GLFWwindow* window;
 	VkInstance instance;
+	VkSurfaceKHR surface;
+
+	VkDevice device;
 	VkPhysicalDevice physicalDevice;
+
+	VkQueue presentQueue;
+	VkQueue graphicsQueue;
+
 	VkDebugUtilsMessengerEXT debugMessenger;
 	struct QueueFamilyIndices
 	{
 		std::optional<uint32_t> graphicsFamily;
+		std::optional<uint32_t> presentFamily;
 
 		bool isComplete();
 	};
@@ -65,6 +73,10 @@ private:
 	void createInstance();
 
 	void pickPhysicalDevice();
+
+	void createLogicalDevice();
+
+	void createSurface();
 	
 	bool isDeviceSuitable(VkPhysicalDevice device);
 
