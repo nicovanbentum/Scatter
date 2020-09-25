@@ -62,6 +62,8 @@ private:
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 
+	std::vector<VkImageView> swapChainImageViews;
+
 	VkDebugUtilsMessengerEXT debugMessenger;
 	struct QueueFamilyIndices
 	{
@@ -95,6 +97,8 @@ private:
 	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
 	void createSwapChain();
+
+	void createImageViews();
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
