@@ -1,11 +1,14 @@
 #pragma once
 //std libs
+#define NOMINMAX
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <cstring>
 #include <assert.h>
 #include <optional>
 #include <set>
+#include <cstdint>
 
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"
