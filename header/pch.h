@@ -2,6 +2,7 @@
 //std libs
 #define NOMINMAX
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <vector>
 #include <cstring>

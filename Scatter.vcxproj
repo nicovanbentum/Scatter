@@ -24,6 +24,10 @@
     <ClInclude Include="header\HelloTriangleApplication.h" />
     <ClInclude Include="header\pch.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shader\shader.frag" />
+    <None Include="shader\shader.vert" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

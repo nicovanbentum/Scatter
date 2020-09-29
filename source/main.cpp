@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "HelloTriangleApplication.h"
 
-
 int main()
 {
     HelloTriangleApplication app;
