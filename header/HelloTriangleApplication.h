@@ -64,6 +64,7 @@ private:
 
 	std::vector<VkImageView> swapChainImageViews;
 
+	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 
 	VkDebugUtilsMessengerEXT debugMessenger;
@@ -101,6 +102,8 @@ private:
 	void createSwapChain();
 
 	void createImageViews();
+
+	void createRenderPass();
 
 	void createGraphicsPipeline();
 
