@@ -64,8 +64,10 @@ private:
 
 	std::vector<VkImageView> swapChainImageViews;
 
+	VkPipeline graphicsPipeline;
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
+
 
 	VkDebugUtilsMessengerEXT debugMessenger;
 	struct QueueFamilyIndices
