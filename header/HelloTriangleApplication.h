@@ -69,6 +69,9 @@ private:
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 
+	VkCommandPool commandPool;
+	std::vector<VkCommandBuffer> commandBuffers;
+
 
 	VkDebugUtilsMessengerEXT debugMessenger;
 	struct QueueFamilyIndices
@@ -111,6 +114,10 @@ private:
 	void createGraphicsPipeline();
 
 	void createFrameBuffers();
+
+	void createCommandPool();
+
+	void createCommandBuffers();
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
