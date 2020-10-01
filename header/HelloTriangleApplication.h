@@ -6,6 +6,8 @@ const int MAX_FRAME_IN_FLIGHT = 2;
 const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
+
+
 static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator,
@@ -44,7 +46,7 @@ public:
 		mainLoop();
 		cleanup();
 	}
-
+	bool frameBufferResized = false;
 private:
 
 	GLFWwindow* window;
@@ -77,6 +79,8 @@ private:
 	std::vector<VkFence> inFlightFences;
 	std::vector<VkFence> imagesInFlight;
 	size_t currentFrame = 0;
+
+	
 	
 
 	VkDebugUtilsMessengerEXT debugMessenger;
@@ -117,6 +121,8 @@ private:
 
 	void createSwapChain();
 
+	void recreateSwapChain();
+
 	void createImageViews();
 
 	void createRenderPass();
@@ -143,6 +149,8 @@ private:
 
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 
+	void cleanupSwapChain();
+
 	void cleanup();
 
 	void setupDebugMessenger();
@@ -161,3 +169,9 @@ private:
 		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 		void* pUserData);
 };
+
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+	auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+	app->frameBufferResized = true;
+}
