@@ -62,10 +62,6 @@ void HelloTriangleApplication::drawFrame()
 	{
 		throw std::runtime_error("failed to acquire swap chain image \n");
 	}
-	else
-	{
-		std::cout << "successfully acquired swap chain image \n";
-	}
 
 
 	if (imagesInFlight[imageIndex] != VK_NULL_HANDLE)
@@ -94,10 +90,6 @@ void HelloTriangleApplication::drawFrame()
 	{
 		throw std::runtime_error("failed to submit draw command buffer! \n");
 	}
-	else
-	{
-		std::cout << "successfully submitted draw command buffer! \n";
-	}
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -120,10 +112,6 @@ void HelloTriangleApplication::drawFrame()
 	else if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to present swap chain image! \n");
-	}
-	else
-	{
-		std::cout << "successfully presented swap chain image! \n";
 	}
 
 	currentFrame = (currentFrame + 1) % MAX_FRAME_IN_FLIGHT;
@@ -483,12 +471,16 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	fragShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr;
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

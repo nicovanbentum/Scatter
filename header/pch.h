@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <optional>
 #include <set>
+#include <array>
 #include <cstdint>
 
 #include "vulkan/vulkan.h"
