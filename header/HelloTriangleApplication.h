@@ -66,11 +66,17 @@ struct Vertex
 	}
 };
 
-const std::vector<Vertex> vertices =
-{
-	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+//const std::vector<Vertex> blorp =
+//{
+//	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+//	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+//	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+//};
+//
+const std::vector<Vertex> vertices = {
+	{{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
+	{{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
+	{{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
 };
 
 class HelloTriangleApplication
@@ -117,7 +123,8 @@ private:
 	std::vector<VkFence> imagesInFlight;
 	size_t currentFrame = 0;
 
-	
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
 	
 
 	VkDebugUtilsMessengerEXT debugMessenger;
@@ -170,9 +177,13 @@ private:
 
 	void createCommandPool();
 
+	void createVertexBuffer();
+
 	void createCommandBuffers();
 
 	void createSyncObjects();
+
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
