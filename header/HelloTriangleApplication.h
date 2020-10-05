@@ -61,7 +61,7 @@ struct Vertex
 		attributeDescription[1].binding = 0;
 		attributeDescription[1].location = 1;
 		attributeDescription[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescription[1].offset = offsetof(Vertex, pos);
+		attributeDescription[1].offset = offsetof(Vertex, color);
 		return attributeDescription;
 	}
 };
