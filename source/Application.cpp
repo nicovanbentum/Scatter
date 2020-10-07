@@ -18,10 +18,16 @@ scatter::VulkanApplication::VulkanApplication(uint32_t width, uint32_t height)
 
 	device.init(window);
 	swapchain.init(window, device);
+
+	shaderManager.init(device.device);
+	shaderManager.addShader("shader/vert.spv");
+	shaderManager.addShader("shader/frag.spv");
 }
 
 scatter::VulkanApplication::~VulkanApplication()
 {
+	shaderManager.destroy();
+
 	swapchain.destroy(device.device);
 
 	glfwDestroyWindow(window);

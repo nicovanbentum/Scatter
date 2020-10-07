@@ -5,6 +5,8 @@
 namespace scatter {
 
     class VulkanShader {
+        friend class VulkanShaderManager;
+
     public:
         VulkanShader();
         ~VulkanShader();
