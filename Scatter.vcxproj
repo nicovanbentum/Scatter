@@ -30,7 +30,6 @@
     <ClCompile Include="source\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="header\Application.h" />
     <ClInclude Include="header\CommandBufferManager.h" />
     <ClInclude Include="header\Device.h" />
     <ClInclude Include="header\HelloTriangleApplication.h" />
@@ -41,7 +40,7 @@
     <ClInclude Include="header\ShaderManager.h" />
     <ClInclude Include="header\Swapchain.h" />
     <ClInclude Include="header\Texture.h" />
-    <ClInclude Include="header\VulkanApplication.h" />
+    <ClInclude Include="header\Application.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\shader.frag" />
