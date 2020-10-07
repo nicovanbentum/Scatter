@@ -6,25 +6,27 @@
 #include "ShaderManager.h"
 #include "CommandBufferManager.h"
 #include "PipelineManager.h"
+#include "Swapchain.h"
 
 namespace scatter {
 
     class VulkanApplication {
     public:
-        VulkanApplication();
+        VulkanApplication(uint32_t width, uint32_t height);
         ~VulkanApplication();
 
         void update(float dt);
 
         VkPipeline createPipeline();
 
+        bool frameBufferResized = false;
+    
     private:
         VulkanDevice device;
+        VulkanSwapchain swapchain;
         VulkanShaderManager shaderManager;
         CommandBufferManager commandBufferManager;
         VulkanPipelineManager pipelineManager;
-
-        VkDebugUtilsMessengerEXT debugMessenger;
 
         GLFWwindow* window;
         VkSurfaceKHR surface;

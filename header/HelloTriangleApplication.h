@@ -128,12 +128,12 @@ private:
 	
 
 	VkDebugUtilsMessengerEXT debugMessenger;
-	struct QueueFamilyIndices
+	struct QFamilyIndices
 	{
 		std::optional<uint32_t> graphicsFamily;
 		std::optional<uint32_t> presentFamily;
 
-		bool isComplete();
+		bool isCompleted();
 	};
 
 	struct SwapChainSupportDetails
@@ -185,7 +185,7 @@ private:
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+	QFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
 	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 

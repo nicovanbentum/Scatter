@@ -229,7 +229,7 @@ void HelloTriangleApplication::pickPhysicalDevice()
 
 void HelloTriangleApplication::createLogicalDevice()
 {
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+	QFamilyIndices indices = findQueueFamilies(physicalDevice);
 
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(),
@@ -315,7 +315,7 @@ void HelloTriangleApplication::createSwapChain()
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+	QFamilyIndices indices = findQueueFamilies(physicalDevice);
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 	if (indices.graphicsFamily != indices.presentFamily)
 	{
@@ -631,7 +631,7 @@ void HelloTriangleApplication::createFrameBuffers()
 
 void HelloTriangleApplication::createCommandPool()
 {
-	QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+	QFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -797,7 +797,7 @@ uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryP
 
 bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 {
-	QueueFamilyIndices indices = findQueueFamilies(device);
+	QFamilyIndices indices = findQueueFamilies(device);
 	bool extensionSupported = checkDeviceExtensionSupport(device);
 	
 	bool swapChainAdequate = false;
@@ -807,12 +807,12 @@ bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice device)
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentMode.empty();
 	}
 
-	return indices.isComplete() && extensionSupported && swapChainAdequate;
+	return indices.isCompleted() && extensionSupported && swapChainAdequate;
 }
 
-HelloTriangleApplication::QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice device)
+HelloTriangleApplication::QFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice device)
 {
-	QueueFamilyIndices indices;
+	QFamilyIndices indices;
 	uint32_t queueFamilyCount = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
@@ -830,7 +830,7 @@ HelloTriangleApplication::QueueFamilyIndices HelloTriangleApplication::findQueue
 		{
 			indices.presentFamily = i;
 		}
-		if (indices.isComplete())
+		if (indices.isCompleted())
 		{
 			break;
 		}
@@ -1075,7 +1075,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback(VkDebugUt
 	return VK_FALSE;
 }
 
-bool HelloTriangleApplication::QueueFamilyIndices::isComplete()
+bool HelloTriangleApplication::QFamilyIndices::isCompleted()
 {
 	return graphicsFamily.has_value() && presentFamily.has_value();
 }
