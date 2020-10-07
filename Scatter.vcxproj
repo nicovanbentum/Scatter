@@ -11,6 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\Application.cpp" />
+    <ClCompile Include="source\CommandBufferManager.cpp" />
+    <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\HelloTriangleApplication.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\pch.cpp">
@@ -19,10 +22,26 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="source\PipelineManager.cpp" />
+    <ClCompile Include="source\RenderSequence.cpp" />
+    <ClCompile Include="source\Shader.cpp" />
+    <ClCompile Include="source\ShaderManager.cpp" />
+    <ClCompile Include="source\Swapchain.cpp" />
+    <ClCompile Include="source\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="header\Application.h" />
+    <ClInclude Include="header\CommandBufferManager.h" />
+    <ClInclude Include="header\Device.h" />
     <ClInclude Include="header\HelloTriangleApplication.h" />
     <ClInclude Include="header\pch.h" />
+    <ClInclude Include="header\PipelineManager.h" />
+    <ClInclude Include="header\RenderSequence.h" />
+    <ClInclude Include="header\Shader.h" />
+    <ClInclude Include="header\ShaderManager.h" />
+    <ClInclude Include="header\Swapchain.h" />
+    <ClInclude Include="header\Texture.h" />
+    <ClInclude Include="header\VulkanApplication.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\shader.frag" />
