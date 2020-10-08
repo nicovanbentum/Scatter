@@ -12,7 +12,7 @@ namespace scatter {
 
     public:
         void init(VulkanDevice& vulkanDevice,VulkanRenderSequence& renderSequence,VkExtent2D& extent,VulkanVertexBuffer& vertexBuffer);
-        void destroy();
+        void destroy(VkDevice device);
 
         VkCommandPool createCommandPool(VulkanDevice& vulkanDevice);
         VkCommandBuffer recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, VulkanVertexBuffer& vertexBuffer);

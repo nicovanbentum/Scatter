@@ -37,6 +37,10 @@ void VulkanApplication::init(uint32_t width, uint32_t height)
 
 void VulkanApplication::destroy()
 {
+	vertexBuffer.destroy(device.device);
+	commandBufferManager.destroy(device.device);
+
+
 	shaderManager.destroy();
 
 	swapchain.destroy(device.device);

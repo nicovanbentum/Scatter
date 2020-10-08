@@ -40,6 +40,7 @@ class VulkanVertexBuffer {
 public:
 	
 	void init(VulkanDevice& device, const std::vector<Vertex>& vertices);
+	void destroy(VkDevice device);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VulkanDevice& device);
 

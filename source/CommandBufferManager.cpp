@@ -8,6 +8,10 @@ namespace scatter
 		createCommandPool(vulkanDevice);
 		recordCommandBuffer(vulkanDevice.device, renderSequence, extent, vertexBuffer);
 	}
+	void CommandBufferManager::destroy(VkDevice device)
+	{
+		vkDestroyCommandPool(device, commandPool, nullptr);
+	}
 	VkCommandPool CommandBufferManager::createCommandPool(VulkanDevice& vulkanDevice)
 {
 	QueueFamilyIndices queueFamilyIndices = vulkanDevice.findQueueFamilies(vulkanDevice.physicalDevice);

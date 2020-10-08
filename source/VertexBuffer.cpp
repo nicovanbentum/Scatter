@@ -44,6 +44,12 @@ void VulkanVertexBuffer::init(VulkanDevice& device, const std::vector<Vertex>& v
 	vkUnmapMemory(device.device, bufferMemory);
 }
 
+void VulkanVertexBuffer::destroy(VkDevice device)
+{
+	vkDestroyBuffer(device, buffer, nullptr);
+	vkFreeMemory(device, bufferMemory, nullptr);
+}
+
 uint32_t VulkanVertexBuffer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VulkanDevice& device)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
