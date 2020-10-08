@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "Device.h"
+#include "CommandBufferManager.h"
 
 namespace scatter
 {
@@ -39,8 +40,8 @@ class VulkanVertexBuffer {
 	friend class CommandBufferManager;
 public:
 	
-	void init(VulkanDevice& device, const std::vector<Vertex>& vertices);
-	void destroy(VkDevice device);
+	void init(VulkanDevice& device, CommandBufferManager& commandBufferManager, const std::vector<Vertex>& vertices);
+	void destroy(const VulkanDevice& device);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VulkanDevice& device);
 
@@ -51,7 +52,7 @@ private:
 	size_t bufferSize;
 
 	VkBuffer buffer;
-	VkDeviceMemory bufferMemory;
-
+	VmaAllocation alloc;
+	VmaAllocationInfo allocInfo;
 };
 }

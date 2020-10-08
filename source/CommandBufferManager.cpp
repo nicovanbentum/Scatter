@@ -3,14 +3,49 @@
 
 namespace scatter
 {
-void CommandBufferManager::init(VulkanDevice& vulkanDevice, VulkanRenderSequence& renderSequence, VkExtent2D& extent, VulkanVertexBuffer& vertexBuffer)	{
+void CommandBufferManager::init(VulkanDevice& vulkanDevice)	{
 		createCommandPool(vulkanDevice);
-		recordCommandBuffer(vulkanDevice.device, renderSequence, extent, vertexBuffer);
 	}
 
 void CommandBufferManager::destroy(VkDevice device)	{
 		vkDestroyCommandPool(device, commandPool, nullptr);
 	}
+
+VkCommandBuffer CommandBufferManager::beginSingleTimeCommands(VulkanDevice& device) {
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device.device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+void CommandBufferManager::endSingleTimeCommands(VulkanDevice& device, VkCommandBuffer buffer) {
+	vkEndCommandBuffer(buffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &buffer;
+
+	if (vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+		throw std::runtime_error("failed to submit single time queue");
+	}
+
+	vkQueueWaitIdle(device.graphicsQueue);
+
+	vkFreeCommandBuffers(device.device, commandPool, 1, &buffer);
+}
 
 void CommandBufferManager::createCommandPool(VulkanDevice& vulkanDevice) {
 	QueueFamilyIndices queueFamilyIndices = vulkanDevice.findQueueFamilies(vulkanDevice.physicalDevice);

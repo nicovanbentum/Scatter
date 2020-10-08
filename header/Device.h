@@ -27,16 +27,13 @@ namespace scatter {
 
     public:
         void init(GLFWwindow* window);
-
         ~VulkanDevice();
-
-        VkRenderPass createRenderPass(VulkanSwapchain swapchain);
-        VkFramebuffer createFramebuffer(const std::vector<VkImageView>& attachments);
 
     private:
         VkDevice device;
         VkInstance instance;
         VkSurfaceKHR surface;
+        VmaAllocator allocator;
         VkPhysicalDevice physicalDevice;
         VkDebugUtilsMessengerEXT debugMessenger;
 

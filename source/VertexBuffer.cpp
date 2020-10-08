@@ -4,50 +4,54 @@
 namespace scatter
 {
 
-void VulkanVertexBuffer::init(VulkanDevice& device, const std::vector<Vertex>& vertices)
+void VulkanVertexBuffer::init(VulkanDevice& device, CommandBufferManager& commandBufferManager, const std::vector<Vertex>& vertices)
 {
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingAlloc;
+	VmaAllocationInfo stagingAllocInfo;
+
 	bufferSize = vertices.size();
-	VkBufferCreateInfo bufferInfo{};
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = sizeof(vertices[0]) * vertices.size();
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	VkBufferCreateInfo stagingBufferInfo{};
+	stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	stagingBufferInfo.size = sizeof(Vertex) * vertices.size();
+	stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	stagingBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(device.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create vertex buffer! \n");
-	}
-	else
-	{
-		std::cout << "successfully created vertex buffer \n";
-	}
+	VmaAllocationCreateInfo stagingAllocCreateInfo = {};
+	stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+	stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(device.device, buffer, &memRequirements);
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, device);
-	if (vkAllocateMemory(device.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to allocate vertex buffer memory! \n");
-	}
-	else
-	{
-		std::cout << "successfully allocated vertex buffer memory! \n";
-	}
-	vkBindBufferMemory(device.device, buffer, bufferMemory, 0);
-	void* data;
-	vkMapMemory(device.device, bufferMemory, 0, bufferInfo.size, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferInfo.size);
-	vkUnmapMemory(device.device, bufferMemory);
+	vmaCreateBuffer(device.allocator, &stagingBufferInfo, &stagingAllocCreateInfo, &stagingBuffer, &stagingAlloc, &stagingAllocInfo);
+
+	memcpy(stagingAllocInfo.pMappedData, vertices.data(), stagingBufferInfo.size);
+
+	VkBufferCreateInfo vertexBufferInfo{};
+	vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	vertexBufferInfo.size = sizeof(vertices[0]) * vertices.size();
+	vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+	vertexBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+	vmaCreateBuffer(device.allocator, &vertexBufferInfo, &allocCreateInfo, &buffer, &alloc, &allocInfo);
+
+	auto commandBuffer = commandBufferManager.beginSingleTimeCommands(device);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = vertices.size() * sizeof(Vertex);
+	vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, &copyRegion);
+
+	commandBufferManager.endSingleTimeCommands(device, commandBuffer);
+
+	vmaDestroyBuffer(device.allocator, stagingBuffer, stagingAlloc);
 }
 
-void VulkanVertexBuffer::destroy(VkDevice device)
+void VulkanVertexBuffer::destroy(const VulkanDevice& device)
 {
-	vkDestroyBuffer(device, buffer, nullptr);
-	vkFreeMemory(device, bufferMemory, nullptr);
+	vmaDestroyBuffer(device.allocator, buffer, alloc);
 }
 
 uint32_t VulkanVertexBuffer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VulkanDevice& device)

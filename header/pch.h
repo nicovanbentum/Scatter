@@ -28,3 +28,6 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+
+// stupid libraries
+#include "VulkanMemoryAllocator/src/vk_mem_alloc.h"

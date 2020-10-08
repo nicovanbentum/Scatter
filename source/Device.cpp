@@ -33,6 +33,17 @@ void VulkanDevice::init(GLFWwindow* window)
 	setupDebugMessenger();
 	pickPhysicalDevice();
 	createLogicalDevice();
+
+	VmaAllocatorCreateInfo allocInfo = {};
+	allocInfo.physicalDevice = physicalDevice;
+	allocInfo.device = device;
+	allocInfo.instance = instance;
+	allocInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+
+	VkResult vmaResult = vmaCreateAllocator(&allocInfo, &allocator);
+	if (vmaResult != VK_SUCCESS) {
+		throw std::runtime_error("failed create vma allocator");
+	}
 }
 
 VulkanDevice::~VulkanDevice()
@@ -41,11 +52,14 @@ VulkanDevice::~VulkanDevice()
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
 
+	vmaDestroyAllocator(allocator);
+
 	vkDestroySurfaceKHR(instance, surface, nullptr);
 
 	vkDestroyDevice(device, nullptr);
 
 	vkDestroyInstance(instance, nullptr);
+
 }
 
 void VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
@@ -114,10 +128,10 @@ void VulkanDevice::createInstance()
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Hello triangle";
-	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.applicationVersion = VK_MAKE_VERSION(1, 2, 0);
 	appInfo.pEngineName = "No Engine";
-	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.engineVersion = VK_MAKE_VERSION(1, 2, 0);
+	appInfo.apiVersion = VK_API_VERSION_1_2;
 
 	VkInstanceCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
