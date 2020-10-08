@@ -155,12 +155,11 @@ void VulkanApplication::recreateSwapChain() {
 	vkDeviceWaitIdle(device.device);
 
 	swapchain.destroy(device.device);
-	renderSequence.destroy(device.device);
+	renderSequence.destroyFramebuffers(device.device);
 
 	swapchain.init(window, device);
-	renderSequence.init(device.device, swapchain, shaderManager);
+	renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
 	commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, vertexBuffer);
-
 }
 
 void VulkanApplication::createSyncObjects() {

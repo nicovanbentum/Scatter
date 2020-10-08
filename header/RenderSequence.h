@@ -10,6 +10,7 @@ namespace scatter {
 		friend class CommandBufferManager;
     public:
         void init(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
+        void destroyFramebuffers(VkDevice device);
         void destroy(VkDevice device);
 
         void createRenderPass(VkDevice device, const VulkanSwapchain& swapchain);
@@ -24,5 +25,10 @@ namespace scatter {
         VkSemaphore semaphore;
 		std::vector<VkFramebuffer> framebuffers;
         VkRenderPass renderPass;
+        
+        std::array<VkDynamicState, 2> dynamicStates = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR
+        };
     };
 }

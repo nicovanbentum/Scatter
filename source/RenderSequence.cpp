@@ -11,6 +11,12 @@ void VulkanRenderSequence::init(VkDevice device, const VulkanSwapchain& swapchai
 	createFramebuffers(device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
 }
 
+void VulkanRenderSequence::destroyFramebuffers(VkDevice device) {
+	for (auto framebuffer : framebuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+}
+
 void VulkanRenderSequence::destroy(VkDevice device)
 {
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -111,9 +117,9 @@ void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, const VulkanS
 	VkPipelineViewportStateCreateInfo viewportState{};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
+	viewportState.pViewports = nullptr;
 	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
+	viewportState.pScissors = nullptr;
 
 	VkPipelineRasterizationStateCreateInfo rasterizer{};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -178,6 +184,11 @@ void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, const VulkanS
 		std::cout << "successfully created pipeline layout! \n";
 	}
 
+	VkPipelineDynamicStateCreateInfo dynamicState{};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineInfo.stageCount = 2;
@@ -189,7 +200,7 @@ void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, const VulkanS
 	pipelineInfo.pMultisampleState = &multisampling;
 	pipelineInfo.pDepthStencilState = nullptr;
 	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.pDynamicState = nullptr;
+	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = pipelineLayout;
 	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;
