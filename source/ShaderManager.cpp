@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "ShaderManager.h"
 
-std::vector<char> scatter::VulkanShaderManager::readFromSpirv(const std::filesystem::path& pathName)
+namespace scatter {
+
+std::vector<char> VulkanShaderManager::readFromSpirv(const std::filesystem::path& pathName)
 {
 	std::ifstream file(pathName, std::ios::ate | std::ios::binary);
 
@@ -24,7 +26,7 @@ std::vector<char> scatter::VulkanShaderManager::readFromSpirv(const std::filesys
 	return buffer;
 }
 
-VkShaderModule scatter::VulkanShaderManager::addShader(const std::filesystem::path& path)
+VkShaderModule VulkanShaderManager::addShader(const std::filesystem::path& path)
 {
 	auto code = readFromSpirv(path);
 
@@ -47,24 +49,24 @@ VkShaderModule scatter::VulkanShaderManager::addShader(const std::filesystem::pa
 	return shaderModule;
 }
 
-void scatter::VulkanShaderManager::init(VkDevice device)
+void VulkanShaderManager::init(VkDevice device)
 {
 	this->device = device;
 }
 
-void scatter::VulkanShaderManager::destroy()
+void VulkanShaderManager::destroy()
 {
 	for (auto& shader : shaders) {
 		vkDestroyShaderModule(device, shader.second, nullptr);
 	}
 }
 
-VkShaderModule scatter::VulkanShaderManager::getShader(const std::filesystem::path& path)
+VkShaderModule VulkanShaderManager::getShader(const std::filesystem::path& path)
 {
 	return shaders[path.string()];
 }
 
-bool scatter::VulkanShaderManager::compile(const std::string& filenameIn, const std::string& filenameOut)
+bool VulkanShaderManager::compile(const std::string& filenameIn, const std::string& filenameOut)
 {
 	const auto vulkan_sdk_path = getenv("VULKAN_SDK");
 	if (!vulkan_sdk_path) {
@@ -84,3 +86,5 @@ bool scatter::VulkanShaderManager::compile(const std::string& filenameIn, const 
 
 	return true;
 }
+
+} // scatter

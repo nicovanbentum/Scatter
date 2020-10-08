@@ -28,7 +28,7 @@ namespace scatter {
 
         ~VulkanDevice();
 
-        VkRenderPass createRenderPass(scatter::VulkanSwapchain swapchain);
+        VkRenderPass createRenderPass(VulkanSwapchain swapchain);
         VkFramebuffer createFramebuffer(const std::vector<VkImageView>& attachments);
 
     private:

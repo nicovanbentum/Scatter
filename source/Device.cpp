@@ -24,7 +24,9 @@ static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
 	}
 }
 
-void scatter::VulkanDevice::init(GLFWwindow* window)
+namespace scatter {
+
+void VulkanDevice::init(GLFWwindow* window)
 {
     createInstance();
 	createSurface(window);
@@ -33,7 +35,7 @@ void scatter::VulkanDevice::init(GLFWwindow* window)
 	createLogicalDevice();
 }
 
-scatter::VulkanDevice::~VulkanDevice()
+VulkanDevice::~VulkanDevice()
 {
 	if (enableValidationLayers) {
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
@@ -46,17 +48,17 @@ scatter::VulkanDevice::~VulkanDevice()
 	vkDestroyInstance(instance, nullptr);
 }
 
-VkRenderPass scatter::VulkanDevice::createRenderPass(scatter::VulkanSwapchain swapchain)
+VkRenderPass VulkanDevice::createRenderPass(VulkanSwapchain swapchain)
 {
     return VkRenderPass();
 }
 
-VkFramebuffer scatter::VulkanDevice::createFramebuffer(const std::vector<VkImageView>& attachments)
+VkFramebuffer VulkanDevice::createFramebuffer(const std::vector<VkImageView>& attachments)
 {
     return VkFramebuffer();
 }
 
-void scatter::VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+void VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
 	createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	//VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -68,7 +70,7 @@ void scatter::VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMesseng
 	createInfo.pfnUserCallback = debugCallback;
 }
 
-scatter::QueueFamilyIndices scatter::VulkanDevice::findQueueFamilies(VkPhysicalDevice device)
+QueueFamilyIndices VulkanDevice::findQueueFamilies(VkPhysicalDevice device)
 {
 	QueueFamilyIndices indices;
 	uint32_t queueFamilyCount = 0;
@@ -97,7 +99,7 @@ scatter::QueueFamilyIndices scatter::VulkanDevice::findQueueFamilies(VkPhysicalD
 	return indices;
 }
 
-bool scatter::VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
+bool VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
 {
 	uint32_t extensionCount;
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -117,7 +119,7 @@ bool scatter::VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
 	return requiredExtensions.empty();
 }
 
-void scatter::VulkanDevice::createInstance()
+void VulkanDevice::createInstance()
 {
 	VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -173,7 +175,7 @@ void scatter::VulkanDevice::createInstance()
 	}
 }
 
-void scatter::VulkanDevice::createSurface(GLFWwindow* window)
+void VulkanDevice::createSurface(GLFWwindow* window)
 {
 	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
 	{
@@ -185,7 +187,7 @@ void scatter::VulkanDevice::createSurface(GLFWwindow* window)
 	}
 }
 
-void scatter::VulkanDevice::pickPhysicalDevice()
+void VulkanDevice::pickPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -222,7 +224,7 @@ void scatter::VulkanDevice::pickPhysicalDevice()
 	}
 }
 
-void scatter::VulkanDevice::createLogicalDevice()
+void VulkanDevice::createLogicalDevice()
 {
 	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
@@ -276,9 +278,9 @@ void scatter::VulkanDevice::createLogicalDevice()
 	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
-bool scatter::VulkanDevice::isDeviceSuitable(VkPhysicalDevice device)
+bool VulkanDevice::isDeviceSuitable(VkPhysicalDevice device)
 {
-	scatter::QueueFamilyIndices indices = findQueueFamilies(device);
+	QueueFamilyIndices indices = findQueueFamilies(device);
 	bool extensionSupported = checkDeviceExtensionSupport(device);
 
 	bool swapChainAdequate = true;
@@ -308,7 +310,7 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	}
 }
 
-void scatter::VulkanDevice::setupDebugMessenger()
+void VulkanDevice::setupDebugMessenger()
 {
 	if (!enableValidationLayers) return;
 
@@ -320,7 +322,7 @@ void scatter::VulkanDevice::setupDebugMessenger()
 	}
 }
 
-std::vector<const char*> scatter::VulkanDevice::getRequiredExtensions()
+std::vector<const char*> VulkanDevice::getRequiredExtensions()
 {
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -335,7 +337,9 @@ std::vector<const char*> scatter::VulkanDevice::getRequiredExtensions()
 	return extensions;
 }
 
-bool scatter::QueueFamilyIndices::isComplete()
+bool QueueFamilyIndices::isComplete()
 {
 	return graphicsFamily.has_value() && presentFamily.has_value();
 }
+
+} // scatter

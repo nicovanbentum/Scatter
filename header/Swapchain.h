@@ -6,6 +6,8 @@
 namespace scatter {
 
     class VulkanSwapchain {
+        friend class VulkanRenderSequence;
+
     public:
         void init(GLFWwindow* window, VulkanDevice& device);
         void destroy(VkDevice device);
@@ -22,4 +24,5 @@ namespace scatter {
         VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
         VkExtent2D chooseSwapExtent(GLFWwindow* window, const VkSurfaceCapabilitiesKHR& capabilities);
     };
+
 }

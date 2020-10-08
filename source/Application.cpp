@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "Application.h"
 
-scatter::VulkanApplication::VulkanApplication(uint32_t width, uint32_t height)
+namespace scatter {
+
+void VulkanApplication::init(uint32_t width, uint32_t height)
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -10,7 +12,7 @@ scatter::VulkanApplication::VulkanApplication(uint32_t width, uint32_t height)
 	glfwSetWindowUserPointer(window, this);
 
 	auto framebufferResizeCallback = [](GLFWwindow* window, int width, int height) {
-		auto app = reinterpret_cast<scatter::VulkanApplication*>(glfwGetWindowUserPointer(window));
+		auto app = reinterpret_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
 		app->frameBufferResized = true;
 	};
 
@@ -22,19 +24,23 @@ scatter::VulkanApplication::VulkanApplication(uint32_t width, uint32_t height)
 	shaderManager.init(device.device);
 	shaderManager.addShader("shader/vert.spv");
 	shaderManager.addShader("shader/frag.spv");
+
+	renderSequence.init(device.device, swapchain, shaderManager);
 }
 
-scatter::VulkanApplication::~VulkanApplication()
+void VulkanApplication::destroy()
 {
 	shaderManager.destroy();
 
 	swapchain.destroy(device.device);
 
+	renderSequence.destroy(device.device);
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
 
-void scatter::VulkanApplication::update(float dt)
+void VulkanApplication::update(float dt)
 {
 	while (!glfwWindowShouldClose(window))
 	{
@@ -44,3 +50,5 @@ void scatter::VulkanApplication::update(float dt)
 
 	// vkDeviceWaitIdle(device.device);
 }
+
+} // scatter

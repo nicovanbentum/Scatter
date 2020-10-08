@@ -51,7 +51,7 @@ namespace scatter {
 		}
 	}
 
-	void VulkanSwapchain::init(GLFWwindow* window, scatter::VulkanDevice& device)
+	void VulkanSwapchain::init(GLFWwindow* window, VulkanDevice& device)
 	{
 		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
 		VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -143,7 +143,7 @@ namespace scatter {
 		}
 	}
 
-	scatter::SwapChainSupportDetails scatter::VulkanSwapchain::querySwapChainSupport(scatter::VulkanDevice& device)
+	SwapChainSupportDetails VulkanSwapchain::querySwapChainSupport(VulkanDevice& device)
 	{
 		SwapChainSupportDetails details;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.physicalDevice, device.surface, &details.capabilities);
