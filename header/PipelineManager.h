@@ -5,13 +5,13 @@
 
 namespace scatter {
 
-    class VulkanPipelineManager {
-    public:
-        VkPipeline getPipeline();
-        VkPipeline createPipeline(VulkanRenderSequence renderSequence);
+class VulkanPipelineManager {
+public:
+    VkPipeline getPipeline();
+    VkPipeline createPipeline(VulkanRenderSequence renderSequence);
 
-    private:
-        std::vector<VkPipeline> pipelines;
-    };
+private:
+    std::vector<VkPipeline> pipelines;
+};
 
 }

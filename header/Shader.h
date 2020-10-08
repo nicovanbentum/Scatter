@@ -4,15 +4,15 @@
 
 namespace scatter {
 
-    class VulkanShader {
-        friend class VulkanShaderManager;
+class VulkanShader {
+    friend class VulkanShaderManager;
 
-    public:
-        VulkanShader();
-        ~VulkanShader();
+public:
+    VulkanShader();
+    ~VulkanShader();
 
-    private:
-        VkShaderModule module;
-    };
+private:
+    VkShaderModule module;
+};
 
 }

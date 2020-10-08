@@ -9,61 +9,53 @@ const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_N
 
 
 static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-	const VkAllocationCallbacks* pAllocator,
-	VkDebugUtilsMessengerEXT* pDebugMessenger)
-{
-	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,
-													"vkCreateDebugUtilsMessengerEXT");
-	if (func != nullptr)
-	{
-		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-	}
-	else
-	{
-		return VK_ERROR_EXTENSION_NOT_PRESENT;
-	}
+    const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+    const VkAllocationCallbacks* pAllocator,
+    VkDebugUtilsMessengerEXT* pDebugMessenger) {
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,
+        "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+    } else {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
 }
 
 static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
-	const VkAllocationCallbacks* pAllocator)
-{
-	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,
-		"vkDestroyDebugUtilsMessengerEXT");
-	if (func != nullptr)
-	{
-		func(instance, debugMessenger, pAllocator);
-	}
+    const VkAllocationCallbacks* pAllocator) {
+    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,
+        "vkDestroyDebugUtilsMessengerEXT");
+    if (func != nullptr) {
+        func(instance, debugMessenger, pAllocator);
+    }
 }
 
 struct Vertex
 {
-	glm::vec2 pos;
-	glm::vec3 color;
+    glm::vec2 pos;
+    glm::vec3 color;
 
-	static VkVertexInputBindingDescription getBindingDescription()
-	{
-		VkVertexInputBindingDescription bindingDescription{};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescription;
-	}
+    static VkVertexInputBindingDescription getBindingDescription() {
+        VkVertexInputBindingDescription bindingDescription{};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(Vertex);
+        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        return bindingDescription;
+    }
 
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
-	{
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescription{};
-		attributeDescription[0].binding = 0;
-		attributeDescription[0].location = 0;
-		attributeDescription[0].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescription[0].offset = offsetof(Vertex, pos);
+    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+        std::array<VkVertexInputAttributeDescription, 2> attributeDescription{};
+        attributeDescription[0].binding = 0;
+        attributeDescription[0].location = 0;
+        attributeDescription[0].format = VK_FORMAT_R32G32_SFLOAT;
+        attributeDescription[0].offset = offsetof(Vertex, pos);
 
-		attributeDescription[1].binding = 0;
-		attributeDescription[1].location = 1;
-		attributeDescription[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescription[1].offset = offsetof(Vertex, color);
-		return attributeDescription;
-	}
+        attributeDescription[1].binding = 0;
+        attributeDescription[1].location = 1;
+        attributeDescription[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescription[1].offset = offsetof(Vertex, color);
+        return attributeDescription;
+    }
 };
 
 //const std::vector<Vertex> blorp =
@@ -74,153 +66,151 @@ struct Vertex
 //};
 //
 const std::vector<Vertex> vertices = {
-	{{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
-	{{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
-	{{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
+    {{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
+    {{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
 };
 
 class HelloTriangleApplication
 {
-public: 
-	void run()
-	{
-		initWindow();
-		initVulkan();
-		mainLoop();
-		cleanup();
-	}
-	bool frameBufferResized = false;
+public:
+    void run() {
+        initWindow();
+        initVulkan();
+        mainLoop();
+        cleanup();
+    }
+    bool frameBufferResized = false;
 private:
 
-	GLFWwindow* window;
-	VkInstance instance;
-	VkSurfaceKHR surface;
+    GLFWwindow* window;
+    VkInstance instance;
+    VkSurfaceKHR surface;
 
-	VkDevice device;
-	VkPhysicalDevice physicalDevice;
+    VkDevice device;
+    VkPhysicalDevice physicalDevice;
 
-	VkQueue presentQueue;
-	VkQueue graphicsQueue;
+    VkQueue presentQueue;
+    VkQueue graphicsQueue;
 
-	VkSwapchainKHR swapChain;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
+    VkSwapchainKHR swapChain;
+    std::vector<VkImage> swapChainImages;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
 
-	std::vector<VkImageView> swapChainImageViews;
-	std::vector<VkFramebuffer> swapChainFrameBuffers;
+    std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkFramebuffer> swapChainFrameBuffers;
 
-	VkPipeline graphicsPipeline;
-	VkRenderPass renderPass;
-	VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+    VkRenderPass renderPass;
+    VkPipelineLayout pipelineLayout;
 
-	VkCommandPool commandPool;
-	std::vector<VkCommandBuffer> commandBuffers;
+    VkCommandPool commandPool;
+    std::vector<VkCommandBuffer> commandBuffers;
 
-	std::vector<VkSemaphore> imageAvailableSemaphore;
-	std::vector<VkSemaphore> renderFinishedSemaphore;
-	std::vector<VkFence> inFlightFences;
-	std::vector<VkFence> imagesInFlight;
+    std::vector<VkSemaphore> imageAvailableSemaphore;
+    std::vector<VkSemaphore> renderFinishedSemaphore;
+    std::vector<VkFence> inFlightFences;
+    std::vector<VkFence> imagesInFlight;
 
-	size_t currentFrame = 0;
+    size_t currentFrame = 0;
 
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-	
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMemory;
 
-	VkDebugUtilsMessengerEXT debugMessenger;
-	struct QFamilyIndices
-	{
-		std::optional<uint32_t> graphicsFamily;
-		std::optional<uint32_t> presentFamily;
 
-		bool isCompleted();
-	};
+    VkDebugUtilsMessengerEXT debugMessenger;
+    struct QFamilyIndices
+    {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
 
-	struct SwapChainSupportDetails
-	{
-		VkSurfaceCapabilitiesKHR capabilities;
-		std::vector<VkSurfaceFormatKHR> formats;
-		std::vector<VkPresentModeKHR> presentMode;
-	};
+        bool isCompleted();
+    };
 
-	void mainLoop();
+    struct SwapChainSupportDetails
+    {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentMode;
+    };
 
-	void drawFrame();
-	
-	void initWindow();
+    void mainLoop();
 
-	void initVulkan();
+    void drawFrame();
 
-	void createInstance();
+    void initWindow();
 
-	void pickPhysicalDevice();
+    void initVulkan();
 
-	void createLogicalDevice();
+    void createInstance();
 
-	void createSurface();
-	
-	bool isDeviceSuitable(VkPhysicalDevice device);
-	
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+    void pickPhysicalDevice();
 
-	void createSwapChain();
+    void createLogicalDevice();
 
-	void recreateSwapChain();
+    void createSurface();
 
-	void createImageViews();
+    bool isDeviceSuitable(VkPhysicalDevice device);
 
-	void createRenderPass();
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
-	void createGraphicsPipeline();
+    void createSwapChain();
 
-	void createFrameBuffers();
+    void recreateSwapChain();
 
-	void createCommandPool();
+    void createImageViews();
 
-	void createVertexBuffer();
+    void createRenderPass();
 
-	void createCommandBuffers();
+    void createGraphicsPipeline();
 
-	void createSyncObjects();
+    void createFrameBuffers();
 
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+    void createCommandPool();
 
-	QFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    void createVertexBuffer();
 
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    void createCommandBuffers();
 
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+    void createSyncObjects();
 
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+    QFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
-	VkShaderModule createShaderModule(const std::vector<char>& code);
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-	void cleanupSwapChain();
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
-	void cleanup();
+    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 
-	void setupDebugMessenger();
+    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-	
-	bool checkValidationLayerSupport();
+    VkShaderModule createShaderModule(const std::vector<char>& code);
 
-	std::vector<const char*> getRequiredExtensions();
+    void cleanupSwapChain();
 
-	static std::vector<char> readFile(const std::string& filename);
+    void cleanup();
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData);
+    void setupDebugMessenger();
+
+    void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+
+    bool checkValidationLayerSupport();
+
+    std::vector<const char*> getRequiredExtensions();
+
+    static std::vector<char> readFile(const std::string& filename);
+
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData);
 };
 
-static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
-{
-	auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
-	app->frameBufferResized = true;
+static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
+    auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+    app->frameBufferResized = true;
 }

@@ -2,18 +2,14 @@
 #include "HelloTriangleApplication.h"
 #include "Application.h"
 
-int main()
-{
+int main() {
     {
         auto app = scatter::VulkanApplication();
         app.init(1920, 1080);
-    
-        try
-        {
+
+        try {
             app.update(10.0f);
-        }
-        catch (const std::exception& e)
-        {
+        } catch (const std::exception& e) {
             std::cerr << e.what() << std::endl;
             return EXIT_FAILURE;
         }

@@ -4,14 +4,14 @@
 
 namespace scatter {
 
-    class VulkanTexture {
-    public:
-        bool loadFromDisk(const std::string& pathName);
+class VulkanTexture {
+public:
+    bool loadFromDisk(const std::string& pathName);
 
-    private:
-        VkImage image;
-        VkImageView view;
-        VkSampler sampler;
-    };
+private:
+    VkImage image;
+    VkImageView view;
+    VkSampler sampler;
+};
 
 }

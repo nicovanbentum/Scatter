@@ -3,13 +3,11 @@
 
 namespace scatter {
 
-VkPipeline VulkanPipelineManager::getPipeline()
-{
+VkPipeline VulkanPipelineManager::getPipeline() {
     return VkPipeline();
 }
 
-VkPipeline VulkanPipelineManager::createPipeline(VulkanRenderSequence renderSequence)
-{
+VkPipeline VulkanPipelineManager::createPipeline(VulkanRenderSequence renderSequence) {
 
     return VkPipeline();
 }
