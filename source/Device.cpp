@@ -48,16 +48,6 @@ VulkanDevice::~VulkanDevice()
 	vkDestroyInstance(instance, nullptr);
 }
 
-VkRenderPass VulkanDevice::createRenderPass(VulkanSwapchain swapchain)
-{
-    return VkRenderPass();
-}
-
-VkFramebuffer VulkanDevice::createFramebuffer(const std::vector<VkImageView>& attachments)
-{
-    return VkFramebuffer();
-}
-
 void VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
 	createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;

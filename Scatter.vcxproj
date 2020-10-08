@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="header\VertexBuffer.cpp" />
     <ClCompile Include="source\Application.cpp" />
     <ClCompile Include="source\CommandBufferManager.cpp" />
     <ClCompile Include="source\Device.cpp" />
@@ -41,6 +42,7 @@
     <ClInclude Include="header\Swapchain.h" />
     <ClInclude Include="header\Texture.h" />
     <ClInclude Include="header\Application.h" />
+    <ClInclude Include="header\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\shader.frag" />

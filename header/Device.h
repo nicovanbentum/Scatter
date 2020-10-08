@@ -22,6 +22,8 @@ namespace scatter {
     class VulkanDevice {
         friend class VulkanApplication;
         friend class VulkanSwapchain;
+        friend class CommandBufferManager;
+        friend class VulkanVertexBuffer;
 
     public:
         void init(GLFWwindow* window);

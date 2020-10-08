@@ -26,6 +26,13 @@ void VulkanApplication::init(uint32_t width, uint32_t height)
 	shaderManager.addShader("shader/frag.spv");
 
 	renderSequence.init(device.device, swapchain, shaderManager);
+	const std::vector<Vertex> vertices = {
+	{{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
+	{{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
+	{{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
+	};
+	vertexBuffer.init(device, vertices);
+	commandBufferManager.init(device, renderSequence, swapchain.swapChainExtent, vertexBuffer);
 }
 
 void VulkanApplication::destroy()

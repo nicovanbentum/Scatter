@@ -26,6 +26,7 @@ namespace scatter {
         VulkanShaderManager shaderManager;
         CommandBufferManager commandBufferManager;
         VulkanPipelineManager pipelineManager;
+        VulkanVertexBuffer vertexBuffer;
 
         GLFWwindow* window;
         VkSurfaceKHR surface;
