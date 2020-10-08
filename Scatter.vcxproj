@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="header\VertexBuffer.cpp" />
+    <ClCompile Include="source\VertexBuffer.cpp" />
     <ClCompile Include="source\Application.cpp" />
     <ClCompile Include="source\CommandBufferManager.cpp" />
     <ClCompile Include="source\Device.cpp" />
