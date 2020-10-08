@@ -3,17 +3,16 @@
 
 namespace scatter
 {
-	void CommandBufferManager::init(VulkanDevice& vulkanDevice, VulkanRenderSequence& renderSequence, VkExtent2D& extent, VulkanVertexBuffer& vertexBuffer)
-	{
+void CommandBufferManager::init(VulkanDevice& vulkanDevice, VulkanRenderSequence& renderSequence, VkExtent2D& extent, VulkanVertexBuffer& vertexBuffer)	{
 		createCommandPool(vulkanDevice);
 		recordCommandBuffer(vulkanDevice.device, renderSequence, extent, vertexBuffer);
 	}
-	void CommandBufferManager::destroy(VkDevice device)
-	{
+
+void CommandBufferManager::destroy(VkDevice device)	{
 		vkDestroyCommandPool(device, commandPool, nullptr);
 	}
-	VkCommandPool CommandBufferManager::createCommandPool(VulkanDevice& vulkanDevice)
-{
+
+void CommandBufferManager::createCommandPool(VulkanDevice& vulkanDevice) {
 	QueueFamilyIndices queueFamilyIndices = vulkanDevice.findQueueFamilies(vulkanDevice.physicalDevice);
 
 	VkCommandPoolCreateInfo poolInfo{};
@@ -31,7 +30,7 @@ namespace scatter
 	}
 }
 
-VkCommandBuffer CommandBufferManager::recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, VulkanVertexBuffer& vertexBuffer)
+void CommandBufferManager::recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, VulkanVertexBuffer& vertexBuffer)
 {
 
 	commandBuffers.resize(renderSequence.framebuffers.size());

@@ -121,6 +121,7 @@ private:
 	std::vector<VkSemaphore> renderFinishedSemaphore;
 	std::vector<VkFence> inFlightFences;
 	std::vector<VkFence> imagesInFlight;
+
 	size_t currentFrame = 0;
 
 	VkBuffer vertexBuffer;

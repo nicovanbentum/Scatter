@@ -13,6 +13,7 @@ namespace scatter {
         void init(GLFWwindow* window, VulkanDevice& device);
         void destroy(VkDevice device);
 
+        
     private:
         VkSwapchainKHR swapChain;
         VkExtent2D swapChainExtent;

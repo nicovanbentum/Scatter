@@ -9,13 +9,13 @@
 namespace scatter {
 
     class CommandBufferManager {
-
+        friend class VulkanApplication;
     public:
         void init(VulkanDevice& vulkanDevice,VulkanRenderSequence& renderSequence,VkExtent2D& extent,VulkanVertexBuffer& vertexBuffer);
         void destroy(VkDevice device);
 
-        VkCommandPool createCommandPool(VulkanDevice& vulkanDevice);
-        VkCommandBuffer recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, VulkanVertexBuffer& vertexBuffer);
+        void createCommandPool(VulkanDevice& vulkanDevice);
+        void recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, VulkanVertexBuffer& vertexBuffer);
 
     private:
         VkCommandPool commandPool;
