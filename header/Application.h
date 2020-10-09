@@ -7,7 +7,6 @@
 #include "CommandBufferManager.h"
 #include "PipelineManager.h"
 #include "Swapchain.h"
-#include "Objects.h"
 
 namespace scatter {
 
@@ -34,13 +33,12 @@ private:
     VulkanShaderManager shaderManager;
     CommandBufferManager commandBufferManager;
     VulkanPipelineManager pipelineManager;
+    VulkanVertexBuffer vertexBuffer;
 
     std::vector<VkSemaphore> imageAvailableSemaphore;
     std::vector<VkSemaphore> renderFinishedSemaphore;
     std::vector<VkFence> inFlightFences;
     std::vector<VkFence> imagesInFlight;
-
-    Object object;
 
     GLFWwindow* window;
     VkSurfaceKHR surface;

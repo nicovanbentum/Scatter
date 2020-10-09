@@ -23,7 +23,7 @@ class VulkanDevice {
     friend class VulkanApplication;
     friend class VulkanSwapchain;
     friend class CommandBufferManager;
-    friend class VulkanBuffer;
+    friend class VulkanVertexBuffer;
 
 public:
     void init(GLFWwindow* window);
