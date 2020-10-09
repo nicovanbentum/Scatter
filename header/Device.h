@@ -1,6 +1,8 @@
 #pragma once
 
 #include "pch.h"
+#include "Swapchain.h"
+#include "RenderSequence.h"
 
 namespace scatter {
 
@@ -29,6 +31,13 @@ public:
     void init(GLFWwindow* window);
     ~VulkanDevice();
 
+    void createCommandPool();
+
+    void recordCommandBuffer(VulkanSwapchain& swapChain, VulkanRenderSequence& renderSequence, Object& object);
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer buffer);
+
+
 private:
     VkDevice device;
     VkInstance instance;
@@ -36,6 +45,10 @@ private:
     VmaAllocator allocator;
     VkPhysicalDevice physicalDevice;
     VkDebugUtilsMessengerEXT debugMessenger;
+
+    VkCommandPool commandPool;
+
+    std::vector<VkCommandBuffer> commandBuffers;
 
     VkQueue presentQueue;
     VkQueue graphicsQueue;

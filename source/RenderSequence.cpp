@@ -227,4 +227,19 @@ void VulkanRenderSequence::createFramebuffers(VkDevice device, const std::vector
     }
 }
 
+size_t VulkanRenderSequence::getFramebufferSize()
+{
+    return framebuffers.size();
+}
+
+VkRenderPass VulkanRenderSequence::getRenderPass()
+{
+    return this->renderPass;
+}
+
+VkFramebuffer VulkanRenderSequence::getFramebuffer(size_t index)
+{
+    return framebuffers[index];
+}
+
 } // scatter

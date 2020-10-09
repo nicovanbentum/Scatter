@@ -3,7 +3,7 @@
 
 namespace scatter {
 
-void VulkanBuffer::init(VulkanDevice& device, CommandBufferManager& commandBufferManager, const void* vectorData, size_t sizeOfData, VkBufferUsageFlagBits usageFlag) {
+void VulkanBuffer::init(VulkanDevice& device, const void* vectorData, size_t sizeOfData, VkBufferUsageFlagBits usageFlag) {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAlloc;
     VmaAllocationInfo stagingAllocInfo;
@@ -33,7 +33,7 @@ void VulkanBuffer::init(VulkanDevice& device, CommandBufferManager& commandBuffe
 
     vmaCreateBuffer(device.allocator, &vertexBufferInfo, &allocCreateInfo, &buffer, &alloc, &allocInfo);
 
-    auto commandBuffer = commandBufferManager.beginSingleTimeCommands(device);
+    auto commandBuffer = VulkanApplication::beginSingleTimeCommands(device);
 
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0; // Optional
@@ -41,7 +41,7 @@ void VulkanBuffer::init(VulkanDevice& device, CommandBufferManager& commandBuffe
     copyRegion.size = sizeOfData;
     vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, &copyRegion);
 
-    commandBufferManager.endSingleTimeCommands(device, commandBuffer);
+    VulkanApplication::endSingleTimeCommands(device, commandBuffer);
 
     vmaDestroyBuffer(device.allocator, stagingBuffer, stagingAlloc);
 }

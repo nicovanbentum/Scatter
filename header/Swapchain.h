@@ -8,6 +8,7 @@ namespace scatter {
 class VulkanSwapchain {
     friend class VulkanRenderSequence;
     friend class VulkanApplication;
+    friend class VulkanDevice;
 
 public:
     void init(GLFWwindow* window, VulkanDevice& device);

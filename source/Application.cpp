@@ -23,29 +23,26 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     shaderManager.addShader("shader/frag.spv");
 
     renderSequence.init(device.device, swapchain, shaderManager);
-    commandBufferManager.init(device);
-
-    object.vertices = {
+    std::vector<Vertex> vertices = {
         {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
         {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
         {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
         {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
     };
-
-    object.indices = {
+    std::vector<uint16_t> indices = {
         0, 1, 2, 2, 3, 0
     };
 
-    object.init(device, commandBufferManager);
+    object.init(device, vertices, indices);
 
-    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, object);
+    device.recordCommandBuffer(swapchain, renderSequence);
     createSyncObjects();
 }
 
 void VulkanApplication::destroy() {
     object.destroy(device);
 
-    commandBufferManager.destroy(device.device);
+   // commandBufferManager.destroy(device.device);
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);
         vkDestroySemaphore(device.device, renderFinishedSemaphore[i], nullptr);
@@ -100,7 +97,7 @@ void VulkanApplication::drawFrame() {
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBufferManager.commandBuffers[imageIndex];
+    submitInfo.pCommandBuffers = &device.commandBuffers[imageIndex];
     VkSemaphore signalSemaphores[] = { renderFinishedSemaphore[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -151,8 +148,10 @@ void VulkanApplication::recreateSwapChain() {
 
     swapchain.init(window, device);
     renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
-    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, object);
+    device.recordCommandBuffer(swapchain, renderSequence);
 }
+
+
 
 void VulkanApplication::createSyncObjects() {
     imageAvailableSemaphore.resize(MAX_FRAME_IN_FLIGHT);

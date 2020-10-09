@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "Swapchain.h"
-#include "Device.h"
 
 namespace scatter {
 
