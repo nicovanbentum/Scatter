@@ -3,7 +3,7 @@
 
 namespace scatter {
 
-void VulkanVertexBuffer::init(VulkanDevice& device, CommandBufferManager& commandBufferManager, const std::vector<Vertex>& vertices) {
+void VulkanVertexBuffer::init(VulkanDevice& device, const std::vector<Vertex>& vertices) {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAlloc;
     VmaAllocationInfo stagingAllocInfo;
@@ -34,7 +34,7 @@ void VulkanVertexBuffer::init(VulkanDevice& device, CommandBufferManager& comman
 
     vmaCreateBuffer(device.allocator, &vertexBufferInfo, &allocCreateInfo, &buffer, &alloc, &allocInfo);
 
-    auto commandBuffer = commandBufferManager.beginSingleTimeCommands(device);
+    auto commandBuffer = device.beginSingleTimeCommands();
 
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0; // Optional
@@ -42,7 +42,7 @@ void VulkanVertexBuffer::init(VulkanDevice& device, CommandBufferManager& comman
     copyRegion.size = vertices.size() * sizeof(Vertex);
     vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, &copyRegion);
 
-    commandBufferManager.endSingleTimeCommands(device, commandBuffer);
+    device.endSingleTimeCommands(commandBuffer);
 
     vmaDestroyBuffer(device.allocator, stagingBuffer, stagingAlloc);
 }

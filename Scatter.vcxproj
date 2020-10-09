@@ -17,7 +17,6 @@
     </ClCompile>
     <ClCompile Include="source\VertexBuffer.cpp" />
     <ClCompile Include="source\Application.cpp" />
-    <ClCompile Include="source\CommandBufferManager.cpp" />
     <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\HelloTriangleApplication.cpp" />
     <ClCompile Include="source\main.cpp" />
@@ -35,7 +34,6 @@
     <ClCompile Include="source\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="header\CommandBufferManager.h" />
     <ClInclude Include="header\Device.h" />
     <ClInclude Include="header\HelloTriangleApplication.h" />
     <ClInclude Include="header\pch.h" />

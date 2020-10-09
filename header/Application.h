@@ -4,7 +4,6 @@
 
 #include "Device.h"
 #include "ShaderManager.h"
-#include "CommandBufferManager.h"
 #include "PipelineManager.h"
 #include "Swapchain.h"
 
@@ -31,7 +30,6 @@ private:
     VulkanSwapchain swapchain;
     VulkanRenderSequence renderSequence;
     VulkanShaderManager shaderManager;
-    CommandBufferManager commandBufferManager;
     VulkanPipelineManager pipelineManager;
     VulkanVertexBuffer vertexBuffer;
 

@@ -24,9 +24,6 @@
     <ClCompile Include="source\HelloTriangleApplication.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\CommandBufferManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,9 +60,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\HelloTriangleApplication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\CommandBufferManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\Device.h">

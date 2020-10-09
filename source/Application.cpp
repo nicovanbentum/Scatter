@@ -30,15 +30,20 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     {{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
     };
 
-    commandBufferManager.init(device);
-    vertexBuffer.init(device, commandBufferManager, vertices);
-    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, vertexBuffer);
+    vertexBuffer.init(device, vertices);
+
+    device.commandBuffers.resize(renderSequence.getFramebuffersCount());
+    device.createCommandBuffers();
+
+    for (size_t i = 0; i < device.commandBuffers.size(); i++) {
+        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), 3, i);
+    }
+
     createSyncObjects();
 }
 
 void VulkanApplication::destroy() {
     vertexBuffer.destroy(device);
-    commandBufferManager.destroy(device.device);
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);
         vkDestroySemaphore(device.device, renderFinishedSemaphore[i], nullptr);
@@ -93,7 +98,7 @@ void VulkanApplication::drawFrame() {
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBufferManager.commandBuffers[imageIndex];
+    submitInfo.pCommandBuffers = &device.commandBuffers[imageIndex];
     VkSemaphore signalSemaphores[] = { renderFinishedSemaphore[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -144,7 +149,13 @@ void VulkanApplication::recreateSwapChain() {
 
     swapchain.init(window, device);
     renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
-    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, vertexBuffer);
+ 
+    device.commandBuffers.resize(renderSequence.getFramebuffersCount());
+    device.createCommandBuffers();
+    for (size_t i = 0; i < device.commandBuffers.size(); i++) {
+        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), 3, i);
+    }
+
 }
 
 void VulkanApplication::createSyncObjects() {
