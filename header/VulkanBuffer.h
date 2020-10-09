@@ -1,12 +1,11 @@
 #pragma once
 #include "pch.h"
 #include "Device.h"
-#include "Application.h"
+#include "CommandBufferManager.h"
 
 namespace scatter {
 
 struct Vertex {
-    friend class Object;
     glm::vec2 pos;
     glm::vec3 color;
 
@@ -34,11 +33,10 @@ struct Vertex {
 };
 
 class VulkanBuffer {
-    friend class VulkanApplication;
-    friend class Object;
+    friend class CommandBufferManager;
 
 public:
-    void init(VulkanDevice& device, const void* vectorData, size_t sizeOfData, VkBufferUsageFlagBits usageFlag);
+    void init(VulkanDevice& device, CommandBufferManager& commandBufferManager, const void* vectorData, size_t sizeOfData, VkBufferUsageFlagBits usageFlag);
     void destroy(const VulkanDevice& device);
 
 private:

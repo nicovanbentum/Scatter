@@ -7,8 +7,7 @@
 namespace scatter {
 
 class VulkanRenderSequence {
-    friend class VulkanApplication;
-    friend class VulkanDevice;
+    friend class CommandBufferManager;
 public:
     void init(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
     void destroyFramebuffers(VkDevice device);
@@ -18,9 +17,6 @@ public:
     void createGraphicsPipeline(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
     void createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent);
 
-    size_t getFramebufferSize();
-    VkRenderPass getRenderPass();
-    VkFramebuffer getFramebuffer(size_t index);
 
 private:
     VkPipeline pipeline;

@@ -4,6 +4,7 @@
 
 #include "Device.h"
 #include "ShaderManager.h"
+#include "CommandBufferManager.h"
 #include "PipelineManager.h"
 #include "Swapchain.h"
 #include "Objects.h"
@@ -11,7 +12,6 @@
 namespace scatter {
 
 class VulkanApplication {
-
 public:
     void init(uint32_t width, uint32_t height);
     void destroy();
@@ -21,8 +21,6 @@ public:
     void drawFrame();
     void createSyncObjects();
     void recreateSwapChain();
-
-
 
     bool frameBufferResized = false;
 
@@ -34,8 +32,8 @@ private:
     VulkanSwapchain swapchain;
     VulkanRenderSequence renderSequence;
     VulkanShaderManager shaderManager;
+    CommandBufferManager commandBufferManager;
     VulkanPipelineManager pipelineManager;
-
 
     std::vector<VkSemaphore> imageAvailableSemaphore;
     std::vector<VkSemaphore> renderFinishedSemaphore;
