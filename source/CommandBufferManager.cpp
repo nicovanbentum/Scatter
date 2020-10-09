@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CommandBufferManager.h"
+#include "Objects.h"
 
 namespace scatter {
 
@@ -62,7 +63,7 @@ void CommandBufferManager::createCommandPool(VulkanDevice& vulkanDevice) {
     }
 }
 
-void CommandBufferManager::recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, VulkanVertexBuffer& vertexBuffer) {
+void CommandBufferManager::recordCommandBuffer(const VkDevice device, VulkanRenderSequence& renderSequence, VkExtent2D extent, Object& object) {
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -115,11 +116,12 @@ void CommandBufferManager::recordCommandBuffer(const VkDevice device, VulkanRend
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, renderSequence.pipeline);
 
-        VkBuffer vertexBuffers[] = { vertexBuffer.buffer };
+        VkBuffer vertexBuffers[] = { object.vertexBuffer.buffer };
         VkDeviceSize offset[] = { 0 };
         vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offset);
+        vkCmdBindIndexBuffer(commandBuffers[i], object.indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(commandBuffers[i], object.indices.size(), 1, 0, 0, 0);
 
-        vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.bufferSize), 1, 0, 0);
         vkCmdEndRenderPass(commandBuffers[i]);
         if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer! \n");

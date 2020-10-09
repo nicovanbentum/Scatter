@@ -23,21 +23,28 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     shaderManager.addShader("shader/frag.spv");
 
     renderSequence.init(device.device, swapchain, shaderManager);
+    commandBufferManager.init(device);
 
-    const std::vector<Vertex> vertices = {
-    {{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
-    {{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
+    object.vertices = {
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
     };
 
-    commandBufferManager.init(device);
-    vertexBuffer.init(device, commandBufferManager, vertices);
-    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, vertexBuffer);
+    object.indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
+    object.init(device, commandBufferManager);
+
+    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, object);
     createSyncObjects();
 }
 
 void VulkanApplication::destroy() {
-    vertexBuffer.destroy(device);
+    object.destroy(device);
+
     commandBufferManager.destroy(device.device);
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);
@@ -144,7 +151,7 @@ void VulkanApplication::recreateSwapChain() {
 
     swapchain.init(window, device);
     renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
-    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, vertexBuffer);
+    commandBufferManager.recordCommandBuffer(device.device, renderSequence, swapchain.swapChainExtent, object);
 }
 
 void VulkanApplication::createSyncObjects() {

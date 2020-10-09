@@ -51,10 +51,13 @@
     <ClCompile Include="source\Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\VertexBuffer.cpp">
+    <ClCompile Include="source\source_impl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\source_impl.cpp">
+    <ClCompile Include="source\VulkanBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Objects.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -92,7 +95,10 @@
     <ClInclude Include="header\Application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\VertexBuffer.h">
+    <ClInclude Include="header\VulkanBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\Objects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

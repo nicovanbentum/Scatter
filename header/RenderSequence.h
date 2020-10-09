@@ -2,7 +2,7 @@
 
 #include "ShaderManager.h"
 #include "Swapchain.h"
-#include "VertexBuffer.h"
+#include "VulkanBuffer.h"
 
 namespace scatter {
 
