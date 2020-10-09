@@ -25,18 +25,24 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     renderSequence.init(device.device, swapchain, shaderManager);
 
     const std::vector<Vertex> vertices = {
-    {{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
-    {{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
     };
 
-    vertexBuffer.init(device, vertices);
+    const std::vector<uint16_t> indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
+    vertexBuffer.init(device, vertices.data(), sizeof(Vertex) * vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    indexBuffer.init(device, indices.data(), sizeof(uint16_t) * indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
 
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), 3, i);
+        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), indices.size(), i);
     }
 
     createSyncObjects();
@@ -44,6 +50,8 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 
 void VulkanApplication::destroy() {
     vertexBuffer.destroy(device);
+    indexBuffer.destroy(device);
+
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);
         vkDestroySemaphore(device.device, renderFinishedSemaphore[i], nullptr);
@@ -153,7 +161,7 @@ void VulkanApplication::recreateSwapChain() {
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), 3, i);
+        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), 6, i);
     }
 
 }

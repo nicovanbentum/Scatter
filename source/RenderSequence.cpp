@@ -228,7 +228,7 @@ void VulkanRenderSequence::createFramebuffers(VkDevice device, const std::vector
     }
 }
 
-void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, uint32_t vertexCount, uint8_t framebufferIndex) {
+void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, size_t indexCount, size_t framebufferIndex) {
     //assert(framebufferIndex < framebuffers.size() - 1);
     
     VkViewport viewport{};
@@ -273,8 +273,8 @@ void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, Vk
     VkBuffer vertexBuffers[] = { vertexBuffer };
     VkDeviceSize offset[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offset);
-
-    vkCmdDraw(commandBuffer, vertexCount, 1, 0, 0);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer! \n");

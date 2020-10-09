@@ -75,6 +75,40 @@ void VulkanDevice::createCommandPool() {
     }
 }
 
+void VulkanDevice::createCommandBuffers() {
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+    if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers! \n");
+    } else {
+        std::cout << "successfully allocated command buffers! \n";
+    }
+}
+
+std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> VulkanDevice::createStagingBuffer(size_t sizeInBytes) {
+    VkBuffer stagingBuffer;
+    VmaAllocation stagingAlloc;
+    VmaAllocationInfo stagingAllocInfo;
+
+    VkBufferCreateInfo stagingBufferInfo{};
+    stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    stagingBufferInfo.size = sizeInBytes;
+    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    stagingBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo stagingAllocCreateInfo = {};
+    stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+    vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocCreateInfo, &stagingBuffer, &stagingAlloc, &stagingAllocInfo);
+
+    return { stagingBuffer, stagingAlloc, stagingAllocInfo };
+}
+
 void VulkanDevice::init(GLFWwindow* window) {
     createInstance();
     createSurface(window);

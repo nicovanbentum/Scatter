@@ -16,7 +16,7 @@ public:
     void createGraphicsPipeline(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
     void createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent);
 
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, uint32_t vertexCount, uint8_t framebufferIndex);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, size_t indexCount, size_t framebufferIndex);
 
     size_t getFramebuffersCount() { return framebuffers.size(); }
 

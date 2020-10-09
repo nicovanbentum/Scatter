@@ -32,23 +32,14 @@ struct Vertex {
 
 };
 
-class VulkanVertexBuffer {
-    friend class CommandBufferManager;
+class VulkanBuffer {
 public:
-
-    void init(VulkanDevice& device, const std::vector<Vertex>& vertices);
+    void init(VulkanDevice& device, const void* vectorData, size_t sizeInBytes, VkBufferUsageFlagBits usage);
     void destroy(const VulkanDevice& device);
-
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VulkanDevice& device);
 
     VkBuffer getBuffer() { return buffer; }
 
 private:
-    glm::vec2 pos;
-    glm::vec3 color;
-
-    size_t bufferSize;
-
     VkBuffer buffer;
     VmaAllocation alloc;
     VmaAllocationInfo allocInfo;

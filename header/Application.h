@@ -31,7 +31,9 @@ private:
     VulkanRenderSequence renderSequence;
     VulkanShaderManager shaderManager;
     VulkanPipelineManager pipelineManager;
-    VulkanVertexBuffer vertexBuffer;
+
+    VulkanBuffer vertexBuffer;
+    VulkanBuffer indexBuffer;
 
     std::vector<VkSemaphore> imageAvailableSemaphore;
     std::vector<VkSemaphore> renderFinishedSemaphore;

@@ -3,30 +3,16 @@
 
 namespace scatter {
 
-void VulkanVertexBuffer::init(VulkanDevice& device, const std::vector<Vertex>& vertices) {
-    VkBuffer stagingBuffer;
-    VmaAllocation stagingAlloc;
-    VmaAllocationInfo stagingAllocInfo;
+void VulkanBuffer::init(VulkanDevice& device, const void* vectorData, size_t sizeInBytes, VkBufferUsageFlagBits usage) {
+  
+    auto [stagingBuffer, stagingAlloc, stagingAllocInfo] = device.createStagingBuffer(sizeInBytes);
 
-    bufferSize = vertices.size();
-    VkBufferCreateInfo stagingBufferInfo{};
-    stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    stagingBufferInfo.size = sizeof(Vertex) * vertices.size();
-    stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    stagingBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VmaAllocationCreateInfo stagingAllocCreateInfo = {};
-    stagingAllocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    stagingAllocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-
-    vmaCreateBuffer(device.allocator, &stagingBufferInfo, &stagingAllocCreateInfo, &stagingBuffer, &stagingAlloc, &stagingAllocInfo);
-
-    memcpy(stagingAllocInfo.pMappedData, vertices.data(), stagingBufferInfo.size);
+    memcpy(stagingAllocInfo.pMappedData, vectorData, sizeInBytes);
 
     VkBufferCreateInfo vertexBufferInfo{};
     vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    vertexBufferInfo.size = sizeof(vertices[0]) * vertices.size();
-    vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    vertexBufferInfo.size = sizeInBytes;
+    vertexBufferInfo.usage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     vertexBufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     VmaAllocationCreateInfo allocCreateInfo{};
@@ -39,7 +25,7 @@ void VulkanVertexBuffer::init(VulkanDevice& device, const std::vector<Vertex>& v
     VkBufferCopy copyRegion{};
     copyRegion.srcOffset = 0; // Optional
     copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = vertices.size() * sizeof(Vertex);
+    copyRegion.size = sizeInBytes;
     vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, &copyRegion);
 
     device.endSingleTimeCommands(commandBuffer);
@@ -47,20 +33,8 @@ void VulkanVertexBuffer::init(VulkanDevice& device, const std::vector<Vertex>& v
     vmaDestroyBuffer(device.allocator, stagingBuffer, stagingAlloc);
 }
 
-void VulkanVertexBuffer::destroy(const VulkanDevice& device) {
+void VulkanBuffer::destroy(const VulkanDevice& device) {
     vmaDestroyBuffer(device.allocator, buffer, alloc);
 }
 
-uint32_t VulkanVertexBuffer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VulkanDevice& device) {
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memProperties);
-    
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("failed to find suitable memory type! \n");
-}
 }
