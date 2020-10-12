@@ -3,6 +3,7 @@
 #include "ShaderManager.h"
 #include "Swapchain.h"
 #include "VertexBuffer.h"
+#include "Object.h"
 
 namespace scatter {
 
@@ -16,7 +17,7 @@ public:
     void createGraphicsPipeline(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
     void createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent);
 
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, size_t indexCount, size_t framebufferIndex);
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex);
 
     size_t getFramebuffersCount() { return framebuffers.size(); }
 

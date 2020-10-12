@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Application.h"
+#include "Vertex.h"
 
 namespace scatter {
 
@@ -24,25 +25,64 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 
     renderSequence.init(device.device, swapchain, shaderManager);
 
-    const std::vector<Vertex> vertices = {
+    auto& obj = objects.emplace_back();
+    obj.vertices = {
         {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
         {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
         {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
         {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
     };
 
-    const std::vector<uint16_t> indices = {
+    obj.indices = {
         0, 1, 2, 2, 3, 0
     };
 
-    vertexBuffer.init(device, vertices.data(), sizeof(Vertex) * vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    indexBuffer.init(device, indices.data(), sizeof(uint16_t) * indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    obj.vertexOffset = 0;
+    obj.indexOffset = 0;
+
+    auto& secondObject = objects.emplace_back();
+    secondObject.vertices = {
+        {{-0.2f, -0.2f}, {1.0f, 1.0f, 0.0f}},
+        {{0.2f, -0.2f}, {1.0f, 1.0f, 0.0f}},
+        {{0.2f, 0.2f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.2f, 0.2f}, {1.0f, 0.0f, 1.0f}}
+    };
+
+    secondObject.indices = {
+        0, 1, 2, 2, 3, 0
+    };
+
+    secondObject.vertexOffset += objects.back().vertices.size();
+    secondObject.indexOffset += objects.back().indices.size();
+
+    // calculate reservation sizes
+    size_t allVerticesSize = 0, allIndicesSize = 0;
+
+    for (const auto& object : objects) {
+        allVerticesSize += object.vertices.size();
+        allIndicesSize += object.indices.size();
+    }
+
+    // reserve both
+    std::vector<Vertex> allVertices;
+    std::vector<uint16_t> allIndices;
+    allVertices.reserve(allVerticesSize);
+    allIndices.reserve(allIndicesSize);
+
+    // copy data from objects to all vectors
+    for (const auto& object : objects) {
+        allVertices.insert(allVertices.end(), object.vertices.begin(), object.vertices.end());
+        allIndices.insert(allIndices.end(), object.indices.begin(), object.indices.end());
+    }
+
+    vertexBuffer.init(device, allVertices.data(), sizeof(Vertex) * allVertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    indexBuffer.init(device, allIndices.data(), sizeof(uint16_t) * allIndices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
 
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), indices.size(), i);
+        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
     }
 
     createSyncObjects();
@@ -161,7 +201,7 @@ void VulkanApplication::recreateSwapChain() {
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), 6, i);
+        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
     }
 
 }

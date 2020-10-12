@@ -11,10 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\Object.cpp" />
     <ClCompile Include="source\source_impl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="source\Vertex.cpp" />
     <ClCompile Include="source\VertexBuffer.cpp" />
     <ClCompile Include="source\Application.cpp" />
     <ClCompile Include="source\Device.cpp" />
@@ -36,6 +38,7 @@
   <ItemGroup>
     <ClInclude Include="header\Device.h" />
     <ClInclude Include="header\HelloTriangleApplication.h" />
+    <ClInclude Include="header\Object.h" />
     <ClInclude Include="header\pch.h" />
     <ClInclude Include="header\PipelineManager.h" />
     <ClInclude Include="header\RenderSequence.h" />
@@ -44,6 +47,7 @@
     <ClInclude Include="header\Swapchain.h" />
     <ClInclude Include="header\Texture.h" />
     <ClInclude Include="header\Application.h" />
+    <ClInclude Include="header\Vertex.h" />
     <ClInclude Include="header\VertexBuffer.h" />
   </ItemGroup>
   <ItemGroup>

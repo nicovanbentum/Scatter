@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "RenderSequence.h"
 #include "Swapchain.h"
+#include "Vertex.h"
+#include "Object.h"
 
 namespace scatter {
 
@@ -228,9 +230,7 @@ void VulkanRenderSequence::createFramebuffers(VkDevice device, const std::vector
     }
 }
 
-void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, size_t indexCount, size_t framebufferIndex) {
-    //assert(framebufferIndex < framebuffers.size() - 1);
-    
+void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex) {
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -272,9 +272,16 @@ void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, Vk
 
     VkBuffer vertexBuffers[] = { vertexBuffer };
     VkDeviceSize offset[] = { 0 };
+
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offset);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+
+    for (const auto& object : objects) {
+        std::cout << object.indexOffset << std::endl;
+        std::cout << object.vertexOffset << std::endl;
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(object.indices.size()), 1, object.indexOffset, object.vertexOffset, 0);
+    }
+    
     vkCmdEndRenderPass(commandBuffer);
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer! \n");

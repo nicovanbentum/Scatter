@@ -22,7 +22,6 @@ struct SwapChainSupportDetails
 class VulkanDevice {
     friend class VulkanApplication;
     friend class VulkanSwapchain;
-    friend class CommandBufferManager;
     friend class VulkanBuffer;
 
 public:

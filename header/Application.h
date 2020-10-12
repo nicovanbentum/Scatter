@@ -6,6 +6,7 @@
 #include "ShaderManager.h"
 #include "PipelineManager.h"
 #include "Swapchain.h"
+#include "Object.h"
 
 namespace scatter {
 
@@ -32,6 +33,7 @@ private:
     VulkanShaderManager shaderManager;
     VulkanPipelineManager pipelineManager;
 
+    std::vector<Object> objects;
     VulkanBuffer vertexBuffer;
     VulkanBuffer indexBuffer;
 
