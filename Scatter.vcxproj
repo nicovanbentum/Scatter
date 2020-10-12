@@ -17,7 +17,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\Vertex.cpp" />
-    <ClCompile Include="source\VertexBuffer.cpp" />
+    <ClCompile Include="source\VulkanBuffer.cpp" />
     <ClCompile Include="source\Application.cpp" />
     <ClCompile Include="source\Device.cpp" />
     <ClCompile Include="source\HelloTriangleApplication.cpp" />
@@ -48,7 +48,7 @@
     <ClInclude Include="header\Texture.h" />
     <ClInclude Include="header\Application.h" />
     <ClInclude Include="header\Vertex.h" />
-    <ClInclude Include="header\VertexBuffer.h" />
+    <ClInclude Include="header\VulkanBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\shader.frag" />
