@@ -116,6 +116,7 @@ void VulkanDevice::init(GLFWwindow* window) {
     pickPhysicalDevice();
     createLogicalDevice();
     createCommandPool();
+    createDescriptorPool();
 
     VmaAllocatorCreateInfo allocInfo = {};
     allocInfo.physicalDevice = physicalDevice;
@@ -136,6 +137,8 @@ VulkanDevice::~VulkanDevice() {
 
     vkDestroyCommandPool(device, commandPool, nullptr);
 
+    vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+
     vmaDestroyAllocator(allocator);
 
     vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -143,6 +146,7 @@ VulkanDevice::~VulkanDevice() {
     vkDestroyDevice(device, nullptr);
 
     vkDestroyInstance(instance, nullptr);
+
 
 }
 
@@ -197,6 +201,33 @@ bool VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
         std::cout << "Extension supported by GPU \n";
     }
     return requiredExtensions.empty();
+}
+
+void VulkanDevice::createDescriptorPool() {
+    VkDescriptorPoolSize pool_sizes[] = {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+
+    VkDescriptorPoolCreateInfo pool_info = {};
+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 1000 * ARRAYSIZE(pool_sizes);
+    pool_info.poolSizeCount = static_cast<uint32_t>(ARRAYSIZE(pool_sizes));
+    pool_info.pPoolSizes = pool_sizes;
+
+    if (vkCreateDescriptorPool(device, &pool_info, nullptr, &descriptorPool) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor pool");
+    }
 }
 
 void VulkanDevice::createInstance() {

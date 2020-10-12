@@ -6,10 +6,12 @@
 
 namespace scatter {
 
-void VulkanRenderSequence::init(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager) {
+void VulkanRenderSequence::init(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager) {
     createRenderPass(device, swapchain);
-    createGraphicsPipeline(device, swapchain, shaderManager);
+    createGraphicsPipeline(device, descriptorPool, swapchain, shaderManager);
     createFramebuffers(device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
+    createDescriptorSets(device, allocator, descriptorPool);
+    updateDescriptorSet(device, allocator);
 }
 
 void VulkanRenderSequence::destroyFramebuffers(VkDevice device) {
@@ -18,13 +20,16 @@ void VulkanRenderSequence::destroyFramebuffers(VkDevice device) {
     }
 }
 
-void VulkanRenderSequence::destroy(VkDevice device) {
+void VulkanRenderSequence::destroy(VkDevice device, VmaAllocator allocator) {
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
     for (auto framebuffer : framebuffers) {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     }
     vkDestroyPipeline(device, pipeline, nullptr);
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
+
+    vmaDestroyBuffer(allocator, uniformBuffer, uniformBufferAlloc);
 }
 
 void VulkanRenderSequence::createRenderPass(VkDevice device, const VulkanSwapchain& swapchain) {
@@ -70,7 +75,7 @@ void VulkanRenderSequence::createRenderPass(VkDevice device, const VulkanSwapcha
     }
 }
 
-void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager) {
+void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager) {
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -166,10 +171,28 @@ void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, const VulkanS
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
+    VkDescriptorSetLayoutBinding uniformBufferBinding = {};
+    uniformBufferBinding.binding = 0;
+    uniformBufferBinding.descriptorCount = 1;
+    uniformBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uniformBufferBinding.pImmutableSamplers = nullptr;
+    uniformBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutInfo{};
+    descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutInfo.bindingCount = 1;
+    descriptorSetLayoutInfo.pBindings = &uniformBufferBinding;
+
+    if (vkCreateDescriptorSetLayout(device, &descriptorSetLayoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout");
+    } else {
+        std::puts("Created descriptor set layout");
+    }
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
@@ -230,7 +253,62 @@ void VulkanRenderSequence::createFramebuffers(VkDevice device, const std::vector
     }
 }
 
-void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex) {
+void VulkanRenderSequence::createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool) {
+    // setup the uniform buffer
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = sizeof(Uniforms);
+    bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo allocCreateInfo{};
+    allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    allocCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+    if (vmaCreateBuffer(allocator, &bufferInfo, &allocCreateInfo, &uniformBuffer, &uniformBufferAlloc, &uniformBufferAllocInfo) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate uniform buffer");
+    } else {
+        std::puts("Succesfully created Uniform Buffer!!");
+    }
+
+    // allocate the descriptor set
+    VkDescriptorSetAllocateInfo descriptorAllocInfo{};
+    descriptorAllocInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptorAllocInfo.descriptorPool = descriptorPool;
+    descriptorAllocInfo.descriptorSetCount = 1;
+    descriptorAllocInfo.pSetLayouts = &descriptorSetLayout;
+
+    if (vkAllocateDescriptorSets(device, &descriptorAllocInfo, &descriptorSet)) {
+        throw std::runtime_error("failed to allocate descriptor sets");
+    } else {
+        std::puts("Succesfully allocated descriptorSets!!");
+    }
+
+    // setup the write descriptor set for updating 
+    descriptorBufferInfo = {};
+    descriptorBufferInfo.buffer = uniformBuffer;
+    descriptorBufferInfo.offset = 0;
+    descriptorBufferInfo.range = VK_WHOLE_SIZE;
+
+    writeDescriptorSet = {};
+    writeDescriptorSet.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet.dstBinding = 0;
+    writeDescriptorSet.descriptorCount = 1;
+    writeDescriptorSet.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeDescriptorSet.dstSet = descriptorSet;
+    writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
+
+    memcpy(uniformBufferAllocInfo.pMappedData, &uniforms, uniformBufferAllocInfo.size);
+    vmaFlushAllocation(allocator, uniformBufferAlloc, 0, uniformBufferAllocInfo.size);
+    vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+}
+
+void VulkanRenderSequence::updateDescriptorSet(VkDevice device, VmaAllocator allocator) {
+    memcpy(uniformBufferAllocInfo.pMappedData, &uniforms, uniformBufferAllocInfo.size);
+    vmaFlushAllocation(allocator, uniformBufferAlloc, 0, uniformBufferAllocInfo.size);
+}
+
+void VulkanRenderSequence::recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VmaAllocator allocator, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex) {
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -276,9 +354,11 @@ void VulkanRenderSequence::recordCommandBuffer(VkCommandBuffer commandBuffer, Vk
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offset);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
+    // update the mvp structure GPU side and bind the descriptor set
+
     for (const auto& object : objects) {
-        std::cout << object.indexOffset << std::endl;
-        std::cout << object.vertexOffset << std::endl;
+        uniforms.model = object.model;
+        vkCmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(object.indices.size()), 1, object.indexOffset, object.vertexOffset, 0);
     }
     

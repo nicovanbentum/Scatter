@@ -2,8 +2,11 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-//std libs
+
 #define NOMINMAX
+#include <Windows.h>
+
+//std libs
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -26,8 +29,9 @@
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 // stupid libraries
 #include "VulkanMemoryAllocator/src/vk_mem_alloc.h"

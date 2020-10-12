@@ -23,7 +23,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     shaderManager.addShader("shader/vert.spv");
     shaderManager.addShader("shader/frag.spv");
 
-    renderSequence.init(device.device, swapchain, shaderManager);
+    renderSequence.init(device.device, device.allocator, device.descriptorPool, swapchain, shaderManager);
 
     auto& obj = objects.emplace_back();
     obj.vertices = {
@@ -52,8 +52,8 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         0, 1, 2, 2, 3, 0
     };
 
-    secondObject.vertexOffset += objects.back().vertices.size();
-    secondObject.indexOffset += objects.back().indices.size();
+    secondObject.vertexOffset += static_cast<uint32_t>(objects.back().vertices.size());
+    secondObject.indexOffset += static_cast<uint32_t>(objects.back().indices.size());
 
     // calculate reservation sizes
     size_t allVerticesSize = 0, allIndicesSize = 0;
@@ -82,7 +82,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     device.createCommandBuffers();
 
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
+        renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
     }
 
     createSyncObjects();
@@ -102,7 +102,7 @@ void VulkanApplication::destroy() {
 
     swapchain.destroy(device.device);
 
-    renderSequence.destroy(device.device);
+    renderSequence.destroy(device.device, device.allocator);
 
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -112,6 +112,33 @@ void VulkanApplication::update(float dt) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         drawFrame();
+
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+            objects[0].model = glm::translate(objects[0].model, glm::vec3(0.001, 0, 0));
+            renderSequence.uniforms.model = objects[0].model;
+            renderSequence.updateDescriptorSet(device.device, device.allocator);
+        }
+
+
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+            objects[0].model = glm::translate(objects[0].model, glm::vec3(-0.001, 0, 0));
+            renderSequence.uniforms.model = objects[0].model;
+            renderSequence.updateDescriptorSet(device.device, device.allocator);
+        }
+
+
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+            objects[0].model = glm::translate(objects[0].model, glm::vec3(0, -0.001, 0));
+            renderSequence.uniforms.model = objects[0].model;
+            renderSequence.updateDescriptorSet(device.device, device.allocator);
+        }
+
+
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+            objects[0].model = glm::translate(objects[0].model, glm::vec3(0, 0.001, 0));
+            renderSequence.uniforms.model = objects[0].model;
+            renderSequence.updateDescriptorSet(device.device, device.allocator);
+        }
     }
 
     vkDeviceWaitIdle(device.device);
@@ -201,7 +228,7 @@ void VulkanApplication::recreateSwapChain() {
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.commandBuffers[i], swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
+        renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
     }
 
 }

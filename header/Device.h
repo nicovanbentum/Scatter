@@ -53,6 +53,8 @@ private:
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
 
+    VkDescriptorPool descriptorPool;
+
     void createInstance();
     void createSurface(GLFWwindow* window);
     void pickPhysicalDevice();
@@ -63,6 +65,7 @@ private:
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+    void createDescriptorPool();
 
 };
 
