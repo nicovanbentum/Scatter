@@ -189,12 +189,17 @@ void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, VkDescriptorP
         std::puts("Created descriptor set layout");
     }
 
+    VkPushConstantRange pushConstantRange{};
+    pushConstantRange.offset = 0;
+    pushConstantRange.size = sizeof(glm::mat4);
+    pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout! \n");
@@ -329,8 +334,6 @@ void VulkanRenderSequence::recordCommandBuffer(VkDevice device, VkCommandBuffer 
 
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         throw std::runtime_error("failed to record begin command buffer \n");
-    } else {
-        std::cout << "successfully recorder begin command buffer! \n";
     }
 
     VkRenderPassBeginInfo renderPassInfo{};
@@ -353,20 +356,16 @@ void VulkanRenderSequence::recordCommandBuffer(VkDevice device, VkCommandBuffer 
 
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offset);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-
-    // update the mvp structure GPU side and bind the descriptor set
+    vkCmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 
     for (const auto& object : objects) {
-        uniforms.model = object.model;
-        vkCmdBindDescriptorSets(commandBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+        vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &object.model);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(object.indices.size()), 1, object.indexOffset, object.vertexOffset, 0);
     }
     
     vkCmdEndRenderPass(commandBuffer);
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to record command buffer! \n");
-    } else {
-        std::cout << "successfully recorded command buffer! \n";
     }
 }
 

@@ -84,8 +84,6 @@ void VulkanDevice::createCommandBuffers() {
 
     if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate command buffers! \n");
-    } else {
-        std::cout << "successfully allocated command buffers! \n";
     }
 }
 

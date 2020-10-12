@@ -113,32 +113,39 @@ void VulkanApplication::update(float dt) {
         glfwPollEvents();
         drawFrame();
 
+        bool input = false;
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            objects[0].model = glm::translate(objects[0].model, glm::vec3(0.001, 0, 0));
-            renderSequence.uniforms.model = objects[0].model;
-            renderSequence.updateDescriptorSet(device.device, device.allocator);
+            input = true;
+            objects[1].model = glm::translate(objects[1].model, glm::vec3(0.001, 0, 0));
+
         }
 
 
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            objects[0].model = glm::translate(objects[0].model, glm::vec3(-0.001, 0, 0));
-            renderSequence.uniforms.model = objects[0].model;
-            renderSequence.updateDescriptorSet(device.device, device.allocator);
+            input = true;
+            objects[1].model = glm::translate(objects[1].model, glm::vec3(-0.001, 0, 0));
         }
 
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            objects[0].model = glm::translate(objects[0].model, glm::vec3(0, -0.001, 0));
-            renderSequence.uniforms.model = objects[0].model;
-            renderSequence.updateDescriptorSet(device.device, device.allocator);
+            input = true;
+            objects[1].model = glm::translate(objects[1].model, glm::vec3(0, -0.001, 0));
         }
 
 
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            objects[0].model = glm::translate(objects[0].model, glm::vec3(0, 0.001, 0));
-            renderSequence.uniforms.model = objects[0].model;
-            renderSequence.updateDescriptorSet(device.device, device.allocator);
+            input = true;
+            objects[1].model = glm::translate(objects[1].model, glm::vec3(0, 0.001, 0));
         }
+
+        if (input) {
+            device.commandBuffers.resize(renderSequence.getFramebuffersCount());
+            device.createCommandBuffers();
+            for (size_t i = 0; i < device.commandBuffers.size(); i++) {
+                renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
+            }
+        }
+
     }
 
     vkDeviceWaitIdle(device.device);
