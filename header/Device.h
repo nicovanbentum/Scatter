@@ -39,22 +39,19 @@ private:
     VkQueue presentQueue;
     VkQueue graphicsQueue;
 
+    VkCommandPool commandPool;
+    std::vector<VkCommandBuffer> commandBuffers;
+
+    VkDescriptorPool descriptorPool;
+
     const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
     const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer buffer);
     void createCommandPool();
-
     void createCommandBuffers();
-
     std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> createStagingBuffer(size_t sizeInBytes);
-
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
-
-    VkDescriptorPool descriptorPool;
-
     void createInstance();
     void createSurface(GLFWwindow* window);
     void pickPhysicalDevice();

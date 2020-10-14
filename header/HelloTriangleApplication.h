@@ -67,8 +67,8 @@ struct Vertex
 //
 const std::vector<Vertex> vertices = {
     {{0.0f, -0.1f}, {0.0f, 0.0f, 1.0f}},
-    {{0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.3f, 0.3f}, {0.0f, 0.0f, 1.0f}}
+    {{0.3f, 0.3f}, {1.0f, 0.0f, 0.0f}},
+    {{-0.3f, 0.3f}, {0.0f, 1.0f, 0.0f}}
 };
 
 class HelloTriangleApplication
@@ -81,6 +81,7 @@ public:
         cleanup();
     }
     bool frameBufferResized = false;
+    bool wakeUpBool = true;
 private:
 
     GLFWwindow* window;
