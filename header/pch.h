@@ -5,6 +5,7 @@
 
 #define NOMINMAX
 #include <Windows.h>
+#include <cmath>
 
 //std libs
 #include <algorithm>
@@ -32,6 +33,10 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include "glm/gtx/quaternion.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/gtx/matrix_decompose.hpp"
+#include "glm/gtx/euler_angles.hpp"
 
 // stupid libraries
 #include "VulkanMemoryAllocator/src/vk_mem_alloc.h"

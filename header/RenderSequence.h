@@ -18,12 +18,14 @@ public:
     void init(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
     void destroyFramebuffers(VkDevice device);
     void destroy(VkDevice device, VmaAllocator allocator);
+    void destroyDepthTexture(VkDevice device, VmaAllocator allocator);
 
     void createRenderPass(VkDevice device, const VulkanSwapchain& swapchain);
     void createGraphicsPipeline(VkDevice device, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
     void createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent);
     void createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
     void updateDescriptorSet(VkDevice device, VmaAllocator allocator);
+    void createDepthTexture(VkDevice device, VmaAllocator allocator, const VulkanSwapchain& swapchain);
 
     void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VmaAllocator allocator, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex);
 
@@ -43,6 +45,11 @@ private:
     VkBuffer uniformBuffer;
     VmaAllocation uniformBufferAlloc;
     VmaAllocationInfo uniformBufferAllocInfo;
+
+    VkImage depthImage;
+    VkImageView depthImageView;
+    VmaAllocation depthImageAlloc;
+    VmaAllocationInfo depthImageAllocInfo;
 
     std::vector<VkFramebuffer> framebuffers;
     VkRenderPass renderPass;
