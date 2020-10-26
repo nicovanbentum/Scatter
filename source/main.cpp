@@ -4,17 +4,36 @@
 
 int main() {
     {
-        auto app = scatter::VulkanApplication();
-        app.init(1920, 1080);
+        HelloTriangleApplication myApp;
+        //myApp.wakeUpBool = false;
+        if (myApp.wakeUpBool)
+        {
+            std::cout << "Triangle Active \n";
+            try {
+                myApp.run();
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+        }
+        else
+        {
+            std::cout << "Scatter active \n";
+            auto app = scatter::VulkanApplication();
+            app.init(1920, 1080);
 
-        try {
-            app.update(10.0f);
-        } catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            return EXIT_FAILURE;
+            try {
+                app.update(10.0f);
+            }
+            catch (const std::exception& e) {
+                std::cerr << e.what() << std::endl;
+                return EXIT_FAILURE;
+            }
+
+            app.destroy();
         }
 
-        app.destroy();
     }
     system("pause");
 

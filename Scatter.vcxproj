@@ -47,12 +47,15 @@
     <ClInclude Include="header\Swapchain.h" />
     <ClInclude Include="header\Texture.h" />
     <ClInclude Include="header\Application.h" />
+    <ClInclude Include="header\UniformBuffer.h" />
     <ClInclude Include="header\Vertex.h" />
     <ClInclude Include="header\VulkanBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\shader.frag" />
     <None Include="shader\shader.vert" />
+    <None Include="shader\triangle.frag" />
+    <None Include="shader\triangle.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
