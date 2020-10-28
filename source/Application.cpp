@@ -147,6 +147,10 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     vertexBuffer.init(device, allVertices.data(), sizeof(Vertex) * allVertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     indexBuffer.init(device, allIndices.data(), sizeof(uint16_t) * allIndices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
+    // create scene acceleration structure for ray tracing 
+    accelStructure.addGeometry(device.device, obj, vertexBuffer.getBuffer(), indexBuffer.getBuffer());
+    accelStructure.create(device.device, device.allocator, device.rtExtensionNV);
+
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
 
@@ -160,6 +164,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 void VulkanApplication::destroy() {
     vertexBuffer.destroy(device);
     indexBuffer.destroy(device);
+    accelStructure.destroy(device.device, device.allocator, device.rtExtensionNV);
 
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);

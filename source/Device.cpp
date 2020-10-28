@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Device.h"
 #include "Swapchain.h"
+#include "Extensions.h"
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -108,14 +109,18 @@ std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> VulkanDevice::createStagi
 }
 
 void VulkanDevice::init(GLFWwindow* window) {
+    // standard setup
     createInstance();
     createSurface(window);
     setupDebugMessenger();
     pickPhysicalDevice();
     createLogicalDevice();
+
+    // create pools
     createCommandPool();
     createDescriptorPool();
 
+    // create vma allocator
     VmaAllocatorCreateInfo allocInfo = {};
     allocInfo.physicalDevice = physicalDevice;
     allocInfo.device = device;
@@ -126,6 +131,9 @@ void VulkanDevice::init(GLFWwindow* window) {
     if (vmaResult != VK_SUCCESS) {
         throw std::runtime_error("failed create vma allocator");
     }
+
+    // load function pointers for vk_nv_ray_tracing
+    rtExtensionNV.init(device);
 }
 
 VulkanDevice::~VulkanDevice() {
@@ -191,8 +199,10 @@ bool VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
+
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
     for (const auto& extension : availableExtensions) {
+        std::cout << extension.extensionName << '\n';
         requiredExtensions.erase(extension.extensionName);
     }
     if (requiredExtensions.empty()) {
@@ -242,6 +252,8 @@ void VulkanDevice::createInstance() {
     createInfo.pApplicationInfo = &appInfo;
 
     auto extensions = getRequiredExtensions();
+    extensions.insert(extensions.end(), rtExtensionNV.instanceExtensionNames);
+    
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
     for (const char* extension : extensions) {
@@ -291,6 +303,8 @@ void VulkanDevice::pickPhysicalDevice() {
     } else {
         std::cout << "Found GPU with Vulkan support! " << deviceCount << '\n';
     }
+
+    deviceExtensions.insert(deviceExtensions.end(), rtExtensionNV.deviceExtensionNames.begin(),  rtExtensionNV.deviceExtensionNames.end());
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());

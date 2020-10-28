@@ -3,10 +3,11 @@
 #include "pch.h"
 
 #include "Device.h"
-#include "ShaderManager.h"
-#include "PipelineManager.h"
-#include "Swapchain.h"
 #include "Object.h"
+#include "Swapchain.h"
+#include "ShaderManager.h"
+#include "AccelStructure.h"
+#include "PipelineManager.h"
 
 namespace scatter {
 
@@ -36,6 +37,7 @@ private:
     std::vector<Object> objects;
     VulkanBuffer vertexBuffer;
     VulkanBuffer indexBuffer;
+    AccelerationStructure accelStructure;
 
     std::vector<VkSemaphore> imageAvailableSemaphore;
     std::vector<VkSemaphore> renderFinishedSemaphore;

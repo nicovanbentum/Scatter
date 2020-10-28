@@ -5,7 +5,7 @@
 int main() {
     {
         HelloTriangleApplication myApp;
-        //myApp.wakeUpBool = false;
+        myApp.wakeUpBool = false;
         if (myApp.wakeUpBool)
         {
             std::cout << "Triangle Active \n";

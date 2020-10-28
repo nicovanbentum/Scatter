@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\AccelStructure.cpp" />
     <ClCompile Include="source\Object.cpp" />
     <ClCompile Include="source\source_impl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -36,7 +37,9 @@
     <ClCompile Include="source\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="header\AccelStructure.h" />
     <ClInclude Include="header\Device.h" />
+    <ClInclude Include="header\Extensions.h" />
     <ClInclude Include="header\HelloTriangleApplication.h" />
     <ClInclude Include="header\Object.h" />
     <ClInclude Include="header\pch.h" />

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pch.h"
+#include "Extensions.h"
 
 namespace scatter {
 
@@ -39,13 +40,15 @@ private:
     VkQueue presentQueue;
     VkQueue graphicsQueue;
 
+
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
 
     VkDescriptorPool descriptorPool;
 
+    RayTracingNV rtExtensionNV;
     const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-    const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+    std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer buffer);

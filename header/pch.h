@@ -2,7 +2,6 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-
 #define NOMINMAX
 #include <Windows.h>
 #include <cmath>
@@ -22,6 +21,7 @@
 #include <filesystem>
 
 #include "vulkan/vulkan.h"
+
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
