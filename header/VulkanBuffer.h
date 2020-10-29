@@ -6,7 +6,7 @@ namespace scatter {
 
 class VulkanBuffer {
 public:
-    void init(VulkanDevice& device, const void* vectorData, size_t sizeInBytes, VkBufferUsageFlagBits usage);
+    void init(VulkanDevice& device, const void* vectorData, size_t sizeInBytes, uint32_t usage);
     void destroy(const VulkanDevice& device);
 
     VkBuffer getBuffer() { return buffer; }

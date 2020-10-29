@@ -8,54 +8,27 @@
 
 namespace scatter {
 
-class Extension {
+class vk_nv_ray_tracing {
 public:
-    virtual const char* const* getDeviceExtensionNames(uint32_t* count) = 0;
-    virtual const char* const* getInstanceExtensionNames(uint32_t* count) = 0;
-};
+    inline static PFN_vkCmdTraceRaysNV vkCmdTraceRaysNV;
+    inline static PFN_vkCreateRayTracingPipelinesNV vkCreateRayTracingPipelinesNV;
+    inline static PFN_vkCreateAccelerationStructureNV vkCreateAccelerationStructureNV;
+    inline static PFN_vkDestroyAccelerationStructureNV vkDestroyAccelerationStructureNV;
+    inline static PFN_vkCmdBuildAccelerationStructureNV vkCmdBuildAccelerationStructureNV;
+    inline static PFN_vkGetAccelerationStructureHandleNV vkGetAccelerationStructureHandleNV;
+    inline static PFN_vkBindAccelerationStructureMemoryNV vkBindAccelerationStructureMemoryNV;
+    inline static PFN_vkGetRayTracingShaderGroupHandlesNV vkGetRayTracingShaderGroupHandlesNV;
+    inline static PFN_vkGetAccelerationStructureMemoryRequirementsNV vkGetAccelerationStructureMemoryRequirementsNV;
 
-class RayTracingNV  : public Extension {
-public:
-    // function pointers
-    PFN_vkCreateAccelerationStructureNV                  vkCreateAccelerationStructureNV;
-    PFN_vkDestroyAccelerationStructureNV                 vkDestroyAccelerationStructureNV;
-    PFN_vkBindAccelerationStructureMemoryNV              vkBindAccelerationStructureMemoryNV;
-    PFN_vkGetAccelerationStructureHandleNV               vkGetAccelerationStructureHandleNV;
-    PFN_vkGetAccelerationStructureMemoryRequirementsNV   vkGetAccelerationStructureMemoryRequirementsNV;
-    PFN_vkCmdBuildAccelerationStructureNV                vkCmdBuildAccelerationStructureNV;
-    PFN_vkCreateRayTracingPipelinesNV                    vkCreateRayTracingPipelinesNV;
-    PFN_vkGetRayTracingShaderGroupHandlesNV              vkGetRayTracingShaderGroupHandlesNV;
-    PFN_vkCmdTraceRaysNV                                 vkCmdTraceRaysNV;
+    static void init(VkDevice device);
 
-    RayTracingNV() = default;
-    void init(VkDevice device) {
-        vkCreateAccelerationStructureNV = VK_LOAD_FN(device, vkCreateAccelerationStructureNV);
-        vkDestroyAccelerationStructureNV = VK_LOAD_FN(device, vkDestroyAccelerationStructureNV);
-        vkBindAccelerationStructureMemoryNV = VK_LOAD_FN(device, vkBindAccelerationStructureMemoryNV);
-        vkGetAccelerationStructureHandleNV = VK_LOAD_FN(device, vkGetAccelerationStructureHandleNV);
-        vkGetAccelerationStructureMemoryRequirementsNV = VK_LOAD_FN(device, vkGetAccelerationStructureMemoryRequirementsNV);
-        vkCmdBuildAccelerationStructureNV = VK_LOAD_FN(device, vkCmdBuildAccelerationStructureNV);
-        vkCreateRayTracingPipelinesNV = VK_LOAD_FN(device, vkCreateRayTracingPipelinesNV);
-        vkGetRayTracingShaderGroupHandlesNV = VK_LOAD_FN(device, vkGetRayTracingShaderGroupHandlesNV);
-        vkCmdTraceRaysNV = VK_LOAD_FN(device, vkCmdTraceRaysNV);
-    }
-
-
-    virtual const char* const * getDeviceExtensionNames(uint32_t* count) {
-        *count = static_cast<uint32_t>(deviceExtensionNames.size());
-        return deviceExtensionNames.data();
-
-    }
-    virtual const char* const* getInstanceExtensionNames(uint32_t* count) {
-        *count = static_cast<uint32_t>(1);
-        return &instanceExtensionNames;
-    }
-
-    const std::array<const char*, 2> deviceExtensionNames {
+    static constexpr std::array<const char*, 2> deviceStrings = {
         VK_NV_RAY_TRACING_EXTENSION_NAME, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME
     };
 
-    const char* instanceExtensionNames = VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME;
+    static constexpr std::array<const char*, 1> instanceStrings = {
+        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
+    };
 };
 
 }

@@ -132,8 +132,8 @@ void VulkanDevice::init(GLFWwindow* window) {
         throw std::runtime_error("failed create vma allocator");
     }
 
-    // load function pointers for vk_nv_ray_tracing
-    rtExtensionNV.init(device);
+    // init the ray tracing extension functions
+    vk_nv_ray_tracing::init(device);
 }
 
 VulkanDevice::~VulkanDevice() {
@@ -252,7 +252,7 @@ void VulkanDevice::createInstance() {
     createInfo.pApplicationInfo = &appInfo;
 
     auto extensions = getRequiredExtensions();
-    extensions.insert(extensions.end(), rtExtensionNV.instanceExtensionNames);
+    extensions.insert(extensions.end(), vk_nv_ray_tracing::instanceStrings.begin(), vk_nv_ray_tracing::instanceStrings.end());
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
@@ -304,7 +304,7 @@ void VulkanDevice::pickPhysicalDevice() {
         std::cout << "Found GPU with Vulkan support! " << deviceCount << '\n';
     }
 
-    deviceExtensions.insert(deviceExtensions.end(), rtExtensionNV.deviceExtensionNames.begin(),  rtExtensionNV.deviceExtensionNames.end());
+    deviceExtensions.insert(deviceExtensions.end(), vk_nv_ray_tracing::deviceStrings.begin(), vk_nv_ray_tracing::deviceStrings.end());
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());

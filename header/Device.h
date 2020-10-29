@@ -21,13 +21,18 @@ struct SwapChainSupportDetails
 };
 
 class VulkanDevice {
+    // TODO: figure this friend class mess out
     friend class VulkanApplication;
     friend class VulkanSwapchain;
     friend class VulkanBuffer;
-
+    friend class AccelerationStructureBuilder;
+    friend struct BottomLevelAS;
 public:
     void init(GLFWwindow* window);
     ~VulkanDevice();
+
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer buffer);
 
 private:
     VkDevice device;
@@ -46,12 +51,9 @@ private:
 
     VkDescriptorPool descriptorPool;
 
-    RayTracingNV rtExtensionNV;
     const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
     std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-    VkCommandBuffer beginSingleTimeCommands();
-    void endSingleTimeCommands(VkCommandBuffer buffer);
     void createCommandPool();
     void createCommandBuffers();
     std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> createStagingBuffer(size_t sizeInBytes);

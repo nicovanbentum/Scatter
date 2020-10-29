@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\AccelStructure.cpp" />
+    <ClCompile Include="source\Extensions.cpp" />
     <ClCompile Include="source\Object.cpp" />
     <ClCompile Include="source\source_impl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

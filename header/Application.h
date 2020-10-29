@@ -37,7 +37,7 @@ private:
     std::vector<Object> objects;
     VulkanBuffer vertexBuffer;
     VulkanBuffer indexBuffer;
-    AccelerationStructure accelStructure;
+    BottomLevelAS bottomLevelAS;
 
     std::vector<VkSemaphore> imageAvailableSemaphore;
     std::vector<VkSemaphore> renderFinishedSemaphore;

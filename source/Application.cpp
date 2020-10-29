@@ -147,9 +147,44 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     vertexBuffer.init(device, allVertices.data(), sizeof(Vertex) * allVertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
     indexBuffer.init(device, allIndices.data(), sizeof(uint16_t) * allIndices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
+    std::vector<VkGeometryNV> geometries;
+    
+    for (const auto& object : objects) {
+        VkGeometryNV geometry{};
+        VkGeometryTrianglesNV& triangle = geometry.geometry.triangles;
+
+        geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
+        geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
+        triangle.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+        triangle.vertexData = vertexBuffer.getBuffer();
+        triangle.vertexOffset = obj.vertexOffset;
+        triangle.vertexCount = obj.vertices.size();
+        triangle.vertexStride = sizeof(Vertex);
+        triangle.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+        triangle.indexData = indexBuffer.getBuffer();
+        triangle.indexOffset = 0;
+        triangle.indexCount = obj.indices.size();
+        triangle.indexType = VK_INDEX_TYPE_UINT16;
+        triangle.transformData = VK_NULL_HANDLE;
+        triangle.transformOffset = 0;
+        geometry.geometry.aabbs = {};
+        geometry.geometry.aabbs.sType = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
+        geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+
+        geometries.push_back(geometry);
+    }
+
     // create scene acceleration structure for ray tracing 
-    accelStructure.addGeometry(device.device, obj, vertexBuffer.getBuffer(), indexBuffer.getBuffer());
-    accelStructure.create(device.device, device.allocator, device.rtExtensionNV);
+    VkAccelerationStructureCreateInfoNV accStructCreateInfo{};
+    accStructCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
+    accStructCreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    accStructCreateInfo.info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
+    accStructCreateInfo.info.instanceCount = 0;
+    accStructCreateInfo.info.geometryCount = geometries.size();
+    accStructCreateInfo.info.pGeometries = geometries.data();
+
+    bottomLevelAS.init(device.device, device.allocator, &accStructCreateInfo);
+    bottomLevelAS.record(device, &accStructCreateInfo);
 
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
@@ -164,7 +199,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 void VulkanApplication::destroy() {
     vertexBuffer.destroy(device);
     indexBuffer.destroy(device);
-    accelStructure.destroy(device.device, device.allocator, device.rtExtensionNV);
+    bottomLevelAS.destroy(device.device, device.allocator);
 
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);

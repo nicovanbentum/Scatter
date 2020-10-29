@@ -3,11 +3,13 @@
 
 namespace scatter {
 
-void VulkanBuffer::init(VulkanDevice& device, const void* vectorData, size_t sizeInBytes, VkBufferUsageFlagBits usage) {
+void VulkanBuffer::init(VulkanDevice& device, const void* vectorData, size_t sizeInBytes, uint32_t usage) {
   
     auto [stagingBuffer, stagingAlloc, stagingAllocInfo] = device.createStagingBuffer(sizeInBytes);
 
-    memcpy(stagingAllocInfo.pMappedData, vectorData, sizeInBytes);
+    if (vectorData) {
+        memcpy(stagingAllocInfo.pMappedData, vectorData, sizeInBytes);
+    }
 
     VkBufferCreateInfo vertexBufferInfo{};
     vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -20,15 +22,17 @@ void VulkanBuffer::init(VulkanDevice& device, const void* vectorData, size_t siz
 
     vmaCreateBuffer(device.allocator, &vertexBufferInfo, &allocCreateInfo, &buffer, &alloc, &allocInfo);
 
-    auto commandBuffer = device.beginSingleTimeCommands();
+    if (vectorData) {
+        auto commandBuffer = device.beginSingleTimeCommands();
 
-    VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0; // Optional
-    copyRegion.dstOffset = 0; // Optional
-    copyRegion.size = sizeInBytes;
-    vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, &copyRegion);
+        VkBufferCopy copyRegion{};
+        copyRegion.srcOffset = 0; // Optional
+        copyRegion.dstOffset = 0; // Optional
+        copyRegion.size = sizeInBytes;
+        vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, &copyRegion);
 
-    device.endSingleTimeCommands(commandBuffer);
+        device.endSingleTimeCommands(commandBuffer);
+    }
 
     vmaDestroyBuffer(device.allocator, stagingBuffer, stagingAlloc);
 }
