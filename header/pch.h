@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <filesystem>
+#include <span>
 
 #include "vulkan/vulkan.h"
 

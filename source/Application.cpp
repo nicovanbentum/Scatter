@@ -175,16 +175,31 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     }
 
     // create scene acceleration structure for ray tracing 
-    VkAccelerationStructureCreateInfoNV accStructCreateInfo{};
-    accStructCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
-    accStructCreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
-    accStructCreateInfo.info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
-    accStructCreateInfo.info.instanceCount = 0;
-    accStructCreateInfo.info.geometryCount = geometries.size();
-    accStructCreateInfo.info.pGeometries = geometries.data();
+    VkAccelerationStructureCreateInfoNV BLAScreateInfo{};
+    BLAScreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
+    BLAScreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    BLAScreateInfo.info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
+    BLAScreateInfo.info.instanceCount = 0;
+    BLAScreateInfo.info.geometryCount = geometries.size();
+    BLAScreateInfo.info.pGeometries = geometries.data();
 
-    bottomLevelAS.init(device.device, device.allocator, &accStructCreateInfo);
-    bottomLevelAS.record(device, &accStructCreateInfo);
+    bottomLevelAS.init(device.device, device.allocator, &BLAScreateInfo);
+    bottomLevelAS.record(device, &BLAScreateInfo);
+
+    VkAccelerationStructureCreateInfoNV TLAScreateInfo{};
+    TLAScreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
+    TLAScreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
+    TLAScreateInfo.info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
+    TLAScreateInfo.info.instanceCount = 1;
+
+    Instance instance;
+    instance.BLAS = bottomLevelAS.as;
+    instance.hitGroupIndex = 0;
+    instance.instanceID = 0;
+    instance.transform = glm::mat4(1.0f);
+
+    topLevelAS.init(device.device, device.allocator, &TLAScreateInfo);
+    topLevelAS.record(device, &instance, &TLAScreateInfo);
 
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
@@ -200,6 +215,7 @@ void VulkanApplication::destroy() {
     vertexBuffer.destroy(device);
     indexBuffer.destroy(device);
     bottomLevelAS.destroy(device.device, device.allocator);
+    topLevelAS.destroy(device.device, device.allocator);
 
     for (size_t i = 0; i < MAX_FRAME_IN_FLIGHT; i++) {
         vkDestroySemaphore(device.device, imageAvailableSemaphore[i], nullptr);

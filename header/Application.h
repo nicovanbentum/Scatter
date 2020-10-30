@@ -38,6 +38,7 @@ private:
     VulkanBuffer vertexBuffer;
     VulkanBuffer indexBuffer;
     BottomLevelAS bottomLevelAS;
+    TopLevelAS topLevelAS;
 
     std::vector<VkSemaphore> imageAvailableSemaphore;
     std::vector<VkSemaphore> renderFinishedSemaphore;

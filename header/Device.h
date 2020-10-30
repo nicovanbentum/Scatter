@@ -27,6 +27,7 @@ class VulkanDevice {
     friend class VulkanBuffer;
     friend class AccelerationStructureBuilder;
     friend struct BottomLevelAS;
+    friend struct TopLevelAS;
 public:
     void init(GLFWwindow* window);
     ~VulkanDevice();

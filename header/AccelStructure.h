@@ -12,11 +12,38 @@ struct BottomLevelAS {
     VmaAllocationInfo allocInfo;
     VkAccelerationStructureNV as;
 
+    void init(VkDevice device, VmaAllocator allocator, VkAccelerationStructureCreateInfoNV* createInfo);
+    void record(VulkanDevice& device, VkAccelerationStructureCreateInfoNV* createInfo);
+    void destroy(VkDevice device, VmaAllocator allocator);
+};
+
+struct Instance {
+    glm::mat4 transform;
+    uint32_t instanceID;
+    uint32_t hitGroupIndex;
+    VkAccelerationStructureNV BLAS;
+};
+
+struct ShaderInstance64 {
+    float transform[12];
+    uint32_t instanceId : 24;
+    uint32_t mask : 8;
+    uint32_t instanceOffset : 24;
+    uint32_t flags : 8;
+    uint64_t asHandle;
+    
+};
+
+static_assert(sizeof(ShaderInstance64) == 64, "incorrect size");
+
+struct TopLevelAS {
+    VmaAllocation alloc;
+    VmaAllocationInfo allocInfo;
+    VkAccelerationStructureNV as;
+
     void init(VkDevice device, VmaAllocator allocator, VkAccelerationStructureCreateInfoNV* createInfo) {
         if (vk_nv_ray_tracing::vkCreateAccelerationStructureNV(device, createInfo, nullptr, &as) != VK_SUCCESS) {
-            throw std::runtime_error("failed vkCreateAccelerationStructureNV");
-        } else {
-            std::cout << "created acceleration structure!\n";
+            throw std::runtime_error("failed to create vkaccelerationstructure for top level");
         }
 
         // get acceleration structure memory requirements
@@ -46,14 +73,52 @@ struct BottomLevelAS {
         if (vk_nv_ray_tracing::vkBindAccelerationStructureMemoryNV(device, 1, &memoryInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to bind acceleration structure memory");
         }
-
-        // set the handle
-        if (vk_nv_ray_tracing::vkGetAccelerationStructureHandleNV(device, as, sizeof(uint64_t), &handle) != VK_SUCCESS) {
-            throw std::runtime_error("failed to get acceleration structure handle");
-        }
     }
 
-    void record(VulkanDevice& device, VkAccelerationStructureCreateInfoNV* createInfo) {
+    void record(VulkanDevice& device,  Instance* instances, VkAccelerationStructureCreateInfoNV* createInfo) {
+        auto shaderInstances = std::vector<ShaderInstance64>(createInfo->info.instanceCount);
+
+        for (const auto& instance : std::span(instances, shaderInstances.size())) {
+            uint64_t asHandle = 0;
+            if (vk_nv_ray_tracing::vkGetAccelerationStructureHandleNV(device.device, instance.BLAS, sizeof(asHandle), &asHandle) != VK_SUCCESS) {
+                throw std::runtime_error("failed to get acceleration structure handle");
+            }
+
+            auto shaderInstance = ShaderInstance64{
+                .instanceId = instance.instanceID,
+                .mask = 0xff,
+                .instanceOffset = instance.hitGroupIndex,
+                .flags = VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV,
+                .asHandle = asHandle
+            };
+
+            std::memcpy(shaderInstance.transform, glm::value_ptr(instance.transform), sizeof(shaderInstance.transform));
+
+            shaderInstances.push_back(shaderInstance);
+        }
+
+        // create a host local buffer with all the instances
+        VkBuffer instancesBuffer;
+        VmaAllocation instancesBufferAlloc;
+        VmaAllocationInfo instancesBufferAllocInfo;
+        
+        auto instanceBufferCreateInfo = VkBufferCreateInfo{
+            .sType          = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .size           = shaderInstances.size() * sizeof(ShaderInstance64),
+            .usage          = VkBufferUsageFlagBits::VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
+            .sharingMode    = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE
+        };
+
+        auto instanceBufferAllocCreateInfo = VmaAllocationCreateInfo{
+            .flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT,
+            .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_ONLY
+        };
+
+        if (vmaCreateBuffer(device.allocator, &instanceBufferCreateInfo, &instanceBufferAllocCreateInfo, &instancesBuffer, &instancesBufferAlloc,
+            &instancesBufferAllocInfo) != VK_SUCCESS) throw std::runtime_error("failed to create instanceBuffer");
+
+        std::memcpy(instancesBufferAllocInfo.pMappedData, shaderInstances.data(), instanceBufferCreateInfo.size);
+
         // get the memory requirements for the scratch buffer
         VkAccelerationStructureMemoryRequirementsInfoNV scratchRequirementsInfo{};
         scratchRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
@@ -78,19 +143,13 @@ struct BottomLevelAS {
 
         vmaCreateBuffer(device.allocator, &scratchBufferInfo, &allocCreateInfo, &scratchBuffer, &scratchBufferAlloc, nullptr);
 
-        // record the command buffer
-        VkCommandBufferBeginInfo beginInfo = {};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
         auto cmdBuffer = device.beginSingleTimeCommands();
 
-        vk_nv_ray_tracing::vkCmdBuildAccelerationStructureNV(cmdBuffer, &createInfo->info, VK_NULL_HANDLE, 0, VK_FALSE, as, VK_NULL_HANDLE, scratchBuffer, 0);
-
-        device.endSingleTimeCommands(cmdBuffer);
-
-        // destroy scratch buffer
+        vk_nv_ray_tracing::vkCmdBuildAccelerationStructureNV(cmdBuffer, &createInfo->info, instancesBuffer, 0, VK_FALSE, as, VK_NULL_HANDLE, scratchBuffer, 0);
+    
+        // cleanup buffers
         vmaDestroyBuffer(device.allocator, scratchBuffer, scratchBufferAlloc);
+        vmaDestroyBuffer(device.allocator, instancesBuffer, instancesBufferAlloc);
     }
 
     void destroy(VkDevice device, VmaAllocator allocator) {
@@ -99,11 +158,5 @@ struct BottomLevelAS {
     }
 };
 
-struct TopLevelAS {
-    glm::mat4 transform;
-    uint32_t instanceID;
-    uint32_t hitGroupIndex;
-    VkAccelerationStructureNV BLAS;
-};
 
 }
