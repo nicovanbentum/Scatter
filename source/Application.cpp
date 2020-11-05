@@ -158,12 +158,12 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         triangle.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
         triangle.vertexData = vertexBuffer.getBuffer();
         triangle.vertexOffset = obj.vertexOffset;
-        triangle.vertexCount = obj.vertices.size();
+        triangle.vertexCount = static_cast<uint32_t>(obj.vertices.size());
         triangle.vertexStride = sizeof(Vertex);
         triangle.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
         triangle.indexData = indexBuffer.getBuffer();
         triangle.indexOffset = 0;
-        triangle.indexCount = obj.indices.size();
+        triangle.indexCount = static_cast<uint32_t>(obj.indices.size());
         triangle.indexType = VK_INDEX_TYPE_UINT16;
         triangle.transformData = VK_NULL_HANDLE;
         triangle.transformOffset = 0;
@@ -180,7 +180,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     BLAScreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
     BLAScreateInfo.info.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_NV;
     BLAScreateInfo.info.instanceCount = 0;
-    BLAScreateInfo.info.geometryCount = geometries.size();
+    BLAScreateInfo.info.geometryCount = static_cast<uint32_t>(geometries.size());
     BLAScreateInfo.info.pGeometries = geometries.data();
 
     bottomLevelAS.init(device.device, device.allocator, &BLAScreateInfo);
@@ -200,6 +200,10 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 
     topLevelAS.init(device.device, device.allocator, &TLAScreateInfo);
     topLevelAS.record(device, &instance, &TLAScreateInfo);
+
+    shadowSequence.createPipeline(device.device, device.descriptorPool, swapchain, shaderManager);
+    shadowSequence.createShadowImage(device.device, device.allocator, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height);
+    shadowSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool, topLevelAS.as);
 
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();

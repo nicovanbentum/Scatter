@@ -21,13 +21,14 @@ int main() {
         {
             std::cout << "Scatter active \n";
             auto app = scatter::VulkanApplication();
-            app.init(1920, 1080);
-
+            
             try {
+                app.init(1920, 1080);
                 app.update(10.0f);
             }
             catch (const std::exception& e) {
                 std::cerr << e.what() << std::endl;
+                system("pause");
                 return EXIT_FAILURE;
             }
 

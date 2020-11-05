@@ -31,6 +31,7 @@ private:
     VulkanDevice device;
     VulkanSwapchain swapchain;
     VulkanRenderSequence renderSequence;
+    RayTracedShadowsSequence shadowSequence;
     VulkanShaderManager shaderManager;
     VulkanPipelineManager pipelineManager;
 
