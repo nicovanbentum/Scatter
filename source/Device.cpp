@@ -88,6 +88,18 @@ void VulkanDevice::createCommandBuffers() {
     }
 }
 
+void VulkanDevice::createRtCommandBuffers() {
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = static_cast<uint32_t>(rtCmdBuffers.size());
+
+    if (vkAllocateCommandBuffers(device, &allocInfo, rtCmdBuffers.data()) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers! \n");
+    }
+}
+
 std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> VulkanDevice::createStagingBuffer(size_t sizeInBytes) {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAlloc;

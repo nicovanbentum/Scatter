@@ -49,6 +49,7 @@ private:
 
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
+    std::vector<VkCommandBuffer> rtCmdBuffers;
 
     VkDescriptorPool descriptorPool;
 
@@ -57,6 +58,7 @@ private:
 
     void createCommandPool();
     void createCommandBuffers();
+    void createRtCommandBuffers();
     std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> createStagingBuffer(size_t sizeInBytes);
     void createInstance();
     void createSurface(GLFWwindow* window);

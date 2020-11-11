@@ -1,0 +1,38 @@
+#version 460
+
+#extension GL_NV_ray_tracing : require
+
+layout(binding = 0, set = 0) uniform accelerationStructureNV AS;
+layout(binding = 1, set = 0, rgba8) uniform writeonly image2D shadowTexture;
+layout(binding = 2, set = 0, rgba32f) uniform readonly image2D worldPositions;
+
+struct Payload {
+    vec3 value;
+};
+
+layout(location = 0) rayPayloadNV Payload payload;
+
+layout(push_constant) uniform pushConstants {
+    vec3 light_direction;
+} pc;
+
+void main() {
+    const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
+    const vec2 uv = pixelCenter/vec2(gl_LaunchSizeNV.xy);
+
+    uint rayFlags = gl_RayFlagsOpaqueNV;
+    float tMin = 0.001;
+    float tMax = 10000.0;
+
+    vec3 origin = imageLoad(worldPositions, ivec2(gl_LaunchIDNV.xy)).xyz;
+
+    if(origin == vec3(0)) return;
+
+    vec3 direction = normalize(-pc.light_direction);
+
+    payload.value = vec3(0);
+
+    traceNV(AS, rayFlags, 0xFF, 0, 0, 0, origin, tMin, direction, tMax, 0);
+
+    imageStore(shadowTexture, ivec2(gl_LaunchIDNV.xy), vec4(payload.value, 1.0));
+}

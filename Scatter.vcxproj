@@ -56,6 +56,7 @@
     <ClInclude Include="header\VulkanBuffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shader\raytrace.rgen" />
     <None Include="shader\shader.frag" />
     <None Include="shader\shader.vert" />
     <None Include="shader\triangle.frag" />

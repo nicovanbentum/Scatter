@@ -122,5 +122,6 @@
     <None Include="shader\shader.vert" />
     <None Include="shader\triangle.frag" />
     <None Include="shader\triangle.vert" />
+    <None Include="shader\raytrace.rgen" />
   </ItemGroup>
 </Project>

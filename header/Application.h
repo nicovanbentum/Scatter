@@ -14,9 +14,8 @@ namespace scatter {
 class VulkanApplication {
 public:
     void init(uint32_t width, uint32_t height);
-    void destroy();
-
     void update(float dt);
+    void destroy();
 
     void drawFrame();
     void createSyncObjects();
