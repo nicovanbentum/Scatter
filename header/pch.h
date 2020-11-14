@@ -20,8 +20,10 @@
 #include <unordered_map>
 #include <filesystem>
 #include <span>
+#include <variant>
 
 #include "vulkan/vulkan.h"
+#include "vulkan/vulkan_win32.h"
 
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"

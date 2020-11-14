@@ -136,12 +136,18 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     topLevelAS.init(device.device, device.allocator, &TLAScreateInfo);
     topLevelAS.record(device, &instance, &TLAScreateInfo);
 
+
     shadowSequence.createPipeline(device.device, device.descriptorPool, swapchain, shaderManager);
-    shadowSequence.createShadowImage(device.device, device.allocator, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height);
-    shadowSequence.createPositionImage(device.device, device.allocator, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height);
+    
+    // create the depth and shadow textures
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
+    shadowSequence.createImages(device.device, swapchain.swapChainExtent, &memoryProperties);
+
+    // setup descriptor sets
     shadowSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool, topLevelAS.as);
 
-    /// get physical device ray tracing properties ///
+    // setup Shader Binding Table
     VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
         .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
     };
@@ -162,6 +168,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
     }
 
+    // record ray trace command buffers
     device.rtCmdBuffers.resize(renderSequence.getFramebuffersCount());
     device.createRtCommandBuffers();
 

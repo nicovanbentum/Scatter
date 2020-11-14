@@ -4,6 +4,7 @@
 #include "Swapchain.h"
 #include "VulkanBuffer.h"
 #include "Object.h"
+#include "Texture.h"
 
 #include <string.h>
 
@@ -33,6 +34,7 @@ public:
 
     size_t getFramebuffersCount() { return framebuffers.size(); }
 
+    VkImageView depthImageView;
 private:
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
@@ -49,7 +51,6 @@ private:
     VmaAllocationInfo uniformBufferAllocInfo;
 
     VkImage depthImage;
-    VkImageView depthImageView;
     VmaAllocation depthImageAlloc;
     VmaAllocationInfo depthImageAllocInfo;
 
@@ -62,84 +63,56 @@ private:
     };
 };
 
-class RayTracedShadowsSequence {
-public:
-    void createPositionImage(VkDevice device, VmaAllocator allocator, uint32_t width, uint32_t height) {
-        VkImageCreateInfo imageCreateInfo = {};
-        imageCreateInfo.mipLevels       = 1;
-        imageCreateInfo.arrayLayers     = 1;
-        imageCreateInfo.extent          = { width, height, 1 };
-        imageCreateInfo.sharingMode     = VK_SHARING_MODE_EXCLUSIVE;
-        imageCreateInfo.imageType       = VkImageType::VK_IMAGE_TYPE_2D;
-        imageCreateInfo.format          = VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT;
-        imageCreateInfo.tiling          = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
-        imageCreateInfo.initialLayout   = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-        imageCreateInfo.samples         = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
-        imageCreateInfo.usage           = VkImageUsageFlagBits::VK_IMAGE_USAGE_STORAGE_BIT;
-        imageCreateInfo.sType           = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+inline uint32_t findMemoryType(VkPhysicalDevice GPU, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(GPU, &memProperties);
 
-        VmaAllocationCreateInfo allocCreateInfo = {};
-        allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-        if (vmaCreateImage(allocator, &imageCreateInfo, &allocCreateInfo, &posImage, &posImageAlloc, nullptr) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create position image");
-        } else {
-            std::puts("created position texture");
-        }
-
-        VkImageViewCreateInfo viewCreateInfo = {};
-        viewCreateInfo.image        = posImage;
-        viewCreateInfo.format       = VkFormat::VK_FORMAT_R16G16B16A16_SFLOAT;
-        viewCreateInfo.viewType     = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-        viewCreateInfo.sType        = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewCreateInfo.subresourceRange.levelCount      = 1;
-        viewCreateInfo.subresourceRange.layerCount      = 1;
-        viewCreateInfo.subresourceRange.baseMipLevel    = 0;
-        viewCreateInfo.subresourceRange.baseArrayLayer  = 0;
-        viewCreateInfo.subresourceRange.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
-
-        if (vkCreateImageView(device, &viewCreateInfo, nullptr, &posImageView) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create position image view");
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
         }
     }
 
-    void createShadowImage(VkDevice device, VmaAllocator allocator, uint32_t width, uint32_t height) {
-        VkImageCreateInfo imageCreateInfo = {};
-        imageCreateInfo.mipLevels       = 1;
-        imageCreateInfo.arrayLayers     = 1;
-        imageCreateInfo.extent          = { width, height, 1 };
-        imageCreateInfo.sharingMode     = VK_SHARING_MODE_EXCLUSIVE;
-        imageCreateInfo.imageType       = VkImageType::VK_IMAGE_TYPE_2D;
-        imageCreateInfo.format          = VkFormat::VK_FORMAT_R8G8B8A8_UNORM;
-        imageCreateInfo.tiling          = VkImageTiling::VK_IMAGE_TILING_OPTIMAL;
-        imageCreateInfo.initialLayout   = VkImageLayout::VK_IMAGE_LAYOUT_UNDEFINED;
-        imageCreateInfo.samples         = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
-        imageCreateInfo.usage           = VkImageUsageFlagBits::VK_IMAGE_USAGE_STORAGE_BIT;
-        imageCreateInfo.sType           = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    throw std::runtime_error("failed to find suitable memory type!");
+}
 
-        VmaAllocationCreateInfo allocCreateInfo = {};
-        allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+class RayTracedShadowsSequence {
+public:
+    struct {
+        glm::vec3 lightDirection = { 0, -1, 0 };
+        glm::mat4 inverseViewProjection = glm::mat4(1.0f);
+    } pushData;
 
-        if (vmaCreateImage(allocator, &imageCreateInfo, &allocCreateInfo, &shadowImage, &shadowImageAlloc, nullptr) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create shadow image");
-        } else {
-            std::puts("created shadow texture");
-        }
+    HANDLE getMemoryHandle(VkDevice device, VkDeviceMemory memory) {
+        auto vkGetMemoryWin32HandleKHR = PFN_vkGetMemoryWin32HandleKHR(vkGetDeviceProcAddr(device, "vkGetMemoryWin32HandleKHR"));
+        
+        VkMemoryGetWin32HandleInfoKHR handleInfo = {};
+        handleInfo.sType        = VkStructureType::VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
+        handleInfo.handleType   = VkExternalMemoryHandleTypeFlagBits::VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+        handleInfo.memory       = memory;
 
-        VkImageViewCreateInfo viewCreateInfo = {};
-        viewCreateInfo.image        = shadowImage;
-        viewCreateInfo.format       = VkFormat::VK_FORMAT_R8G8B8A8_UNORM;
-        viewCreateInfo.viewType     = VkImageViewType::VK_IMAGE_VIEW_TYPE_2D;
-        viewCreateInfo.sType        = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewCreateInfo.subresourceRange.levelCount      = 1;
-        viewCreateInfo.subresourceRange.layerCount      = 1;
-        viewCreateInfo.subresourceRange.baseMipLevel    = 0;
-        viewCreateInfo.subresourceRange.baseArrayLayer  = 0;
-        viewCreateInfo.subresourceRange.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
+        HANDLE handle;
+        vkGetMemoryWin32HandleKHR(device, &handleInfo, &handle);
+        return handle;
+    }
 
-        if (vkCreateImageView(device, &viewCreateInfo, nullptr, &shadowImageView) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create shadow image view");
-        }
+    void createImages(VkDevice device, VkExtent2D extent, VkPhysicalDeviceMemoryProperties* memProperties) {
+        TextureCreateInfo depthTextureInfo = {};
+        depthTextureInfo.extent = extent;
+        depthTextureInfo.format = VK_FORMAT_D32_SFLOAT;
+        depthTextureInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+        depthTexture = TextureEXT(device, &depthTextureInfo, memProperties);
+        depthTexture.createView(device, &depthTextureInfo, VK_IMAGE_ASPECT_DEPTH_BIT);
+        depthTexture.createSampler(device);
+
+        TextureCreateInfo shadowTextureInfo = {};
+        shadowTextureInfo.extent = extent;
+        shadowTextureInfo.format = VkFormat::VK_FORMAT_R8G8B8A8_UNORM;
+        shadowTextureInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT;
+
+        shadowsTexture = TextureEXT(device, &shadowTextureInfo, memProperties);
+        shadowsTexture.createView(device, &shadowTextureInfo);
     }
 
     void createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, VkAccelerationStructureNV tlas) {
@@ -172,7 +145,7 @@ public:
 
         // image write set
         VkDescriptorImageInfo shadowDescriptorImage = {};
-        shadowDescriptorImage.imageView       = shadowImageView;
+        shadowDescriptorImage.imageView       = shadowsTexture.view;
         shadowDescriptorImage.imageLayout     = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
 
         VkWriteDescriptorSet shadowWriteSet = {};
@@ -183,19 +156,20 @@ public:
         shadowWriteSet.descriptorType      = VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
         shadowWriteSet.sType               = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
-        VkDescriptorImageInfo positionDescriptorImage = {};
-        positionDescriptorImage.imageView = posImageView;
-        positionDescriptorImage.imageLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
+        VkDescriptorImageInfo depthDescriptorImage = {};
+        depthDescriptorImage.imageView = depthTexture.view;
+        depthDescriptorImage.imageLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
+        depthDescriptorImage.sampler = depthTexture.sampler;
 
-        VkWriteDescriptorSet positionsWriteSet = {};
-        positionsWriteSet.dstBinding        = 2;
-        positionsWriteSet.descriptorCount   = 1;
-        positionsWriteSet.pImageInfo        = &positionDescriptorImage;
-        positionsWriteSet.dstSet            = descriptorSet;
-        positionsWriteSet.descriptorType    = VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        positionsWriteSet.sType             = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        VkWriteDescriptorSet depthWriteSet = {};
+        depthWriteSet.dstBinding        = 2;
+        depthWriteSet.descriptorCount   = 1;
+        depthWriteSet.pImageInfo        = &depthDescriptorImage;
+        depthWriteSet.dstSet            = descriptorSet;
+        depthWriteSet.descriptorType    = VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        depthWriteSet.sType             = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
-        std::array< VkWriteDescriptorSet, 3> sets = { writeAS, shadowWriteSet, positionsWriteSet };
+        std::array< VkWriteDescriptorSet, 3> sets = { writeAS, shadowWriteSet, depthWriteSet };
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
     }
 
@@ -231,7 +205,7 @@ public:
         VkDescriptorSetLayoutBinding inputImageBinding = {};
         inputImageBinding.binding = 2;
         inputImageBinding.descriptorCount = 1;
-        inputImageBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        inputImageBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         inputImageBinding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
 
         std::array<VkDescriptorSetLayoutBinding, 3> bindings = { TLASbinding, outputImageBinding,  inputImageBinding };
@@ -250,7 +224,7 @@ public:
         //// create the pipeline layout ////
         VkPushConstantRange pcr{};
         pcr.offset = 0;
-        pcr.size = sizeof(glm::vec3);
+        pcr.size = sizeof(pushData);
         pcr.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_NV;
 
         VkPipelineLayoutCreateInfo layoutCreateInfo = {};
@@ -336,10 +310,8 @@ public:
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         vkFreeDescriptorSets(device, descriptorPool, 1, &descriptorSet);
         
-        vmaDestroyImage(allocator, shadowImage, shadowImageAlloc);
-        vmaDestroyImage(allocator, posImage, posImageAlloc);
-        vkDestroyImageView(device, shadowImageView, nullptr);
-        vkDestroyImageView(device, posImageView, nullptr);
+        depthTexture.destroy(device);
+        shadowsTexture.destroy(device);
 
         vmaDestroyBuffer(allocator, sbtBuffer, sbtAlloc);
     }
@@ -354,11 +326,9 @@ public:
             throw std::runtime_error("failed to record begin command buffer \n");
         }
 
-        auto direction = glm::vec3(0, -1, 0);
-
         vkCmdBindPipeline(cmdBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipeline);
         vkCmdBindDescriptorSets(cmdBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-        vkCmdPushConstants(cmdBuffer, pipelineLayout, VK_SHADER_STAGE_RAYGEN_BIT_NV, 0, sizeof(glm::vec3), glm::value_ptr(direction));
+        vkCmdPushConstants(cmdBuffer, pipelineLayout, VK_SHADER_STAGE_RAYGEN_BIT_NV, 0, sizeof(pushData), &pushData);
     
         VkDeviceSize progSize = rtProps.shaderGroupBaseAlignment;  // Size of a program identifier
         VkDeviceSize rayGenOffset   = 0u * progSize;  // Start at the beginning of m_sbtBuffer
@@ -389,15 +359,9 @@ private:
     VkWriteDescriptorSet writeDescriptorSet;
     VkDescriptorBufferInfo descriptorBufferInfo;
 
-    // shadow texture
-    VkImage shadowImage;
-    VmaAllocation shadowImageAlloc;
-    VkImageView shadowImageView;
-
-    // world pos texture
-    VkImage posImage;
-    VmaAllocation posImageAlloc;
-    VkImageView posImageView;
+    // textures
+    TextureEXT depthTexture;
+    TextureEXT shadowsTexture;
 
     // shader binding table
     VkBuffer sbtBuffer;
