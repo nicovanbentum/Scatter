@@ -18,23 +18,20 @@ public:
     } uniforms;
 
 public:
-    void init(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
+    void init(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager, VkImageView depthView);
     void destroyFramebuffers(VkDevice device);
     void destroy(VkDevice device, VmaAllocator allocator);
-    void destroyDepthTexture(VkDevice device, VmaAllocator allocator);
 
     void createRenderPass(VkDevice device, const VulkanSwapchain& swapchain);
     void createGraphicsPipeline(VkDevice device, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager);
-    void createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent);
+    void createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent, VkImageView depthView);
     void createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
     void updateDescriptorSet(VkDevice device, VmaAllocator allocator);
-    void createDepthTexture(VkDevice device, VmaAllocator allocator, const VulkanSwapchain& swapchain);
 
     void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VmaAllocator allocator, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex);
 
     size_t getFramebuffersCount() { return framebuffers.size(); }
 
-    VkImageView depthImageView;
 private:
     VkPipeline pipeline;
     VkPipelineLayout pipelineLayout;
@@ -49,10 +46,6 @@ private:
     VkBuffer uniformBuffer;
     VmaAllocation uniformBufferAlloc;
     VmaAllocationInfo uniformBufferAllocInfo;
-
-    VkImage depthImage;
-    VmaAllocation depthImageAlloc;
-    VmaAllocationInfo depthImageAllocInfo;
 
     std::vector<VkFramebuffer> framebuffers;
     VkRenderPass renderPass;
@@ -113,6 +106,32 @@ public:
 
         shadowsTexture = TextureEXT(device, &shadowTextureInfo, memProperties);
         shadowsTexture.createView(device, &shadowTextureInfo);
+
+        // barrier for sampling depth image
+        depthImageBarrier = {};
+        depthImageBarrier.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        depthImageBarrier.newLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
+        depthImageBarrier.image = depthTexture.image;
+        depthImageBarrier.srcAccessMask = VkAccessFlagBits::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        depthImageBarrier.dstAccessMask = VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT;
+        depthImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        depthImageBarrier.subresourceRange.levelCount = 1;
+        depthImageBarrier.subresourceRange.layerCount = 1;
+
+        shadowImageBarrier = {};
+        shadowImageBarrier.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        shadowImageBarrier.newLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
+        shadowImageBarrier.image = shadowsTexture.image;
+        shadowImageBarrier.srcAccessMask = VkAccessFlagBits::VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+        shadowImageBarrier.dstAccessMask = VkAccessFlagBits::VK_ACCESS_SHADER_WRITE_BIT;
+        shadowImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        shadowImageBarrier.subresourceRange.levelCount = 1;
+        shadowImageBarrier.subresourceRange.layerCount = 1;
+    }
+
+    void destroyImages(VkDevice device) {
+        depthTexture.destroy(device);
+        shadowsTexture.destroy(device);
     }
 
     void createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, VkAccelerationStructureNV tlas) {
@@ -170,6 +189,37 @@ public:
         depthWriteSet.sType             = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 
         std::array< VkWriteDescriptorSet, 3> sets = { writeAS, shadowWriteSet, depthWriteSet };
+        vkUpdateDescriptorSets(device, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
+    }
+
+    void updateImages(VkDevice device) {
+        // image write set
+        VkDescriptorImageInfo shadowDescriptorImage = {};
+        shadowDescriptorImage.imageView = shadowsTexture.view;
+        shadowDescriptorImage.imageLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
+
+        VkWriteDescriptorSet shadowWriteSet = {};
+        shadowWriteSet.dstBinding = 1;
+        shadowWriteSet.descriptorCount = 1;
+        shadowWriteSet.pImageInfo = &shadowDescriptorImage;
+        shadowWriteSet.dstSet = descriptorSet;
+        shadowWriteSet.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        shadowWriteSet.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+
+        VkDescriptorImageInfo depthDescriptorImage = {};
+        depthDescriptorImage.imageView = depthTexture.view;
+        depthDescriptorImage.imageLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
+        depthDescriptorImage.sampler = depthTexture.sampler;
+
+        VkWriteDescriptorSet depthWriteSet = {};
+        depthWriteSet.dstBinding = 2;
+        depthWriteSet.descriptorCount = 1;
+        depthWriteSet.pImageInfo = &depthDescriptorImage;
+        depthWriteSet.dstSet = descriptorSet;
+        depthWriteSet.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        depthWriteSet.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+
+        std::array< VkWriteDescriptorSet, 2> sets = { shadowWriteSet, depthWriteSet };
         vkUpdateDescriptorSets(device, static_cast<uint32_t>(sets.size()), sets.data(), 0, nullptr);
     }
 
@@ -326,6 +376,9 @@ public:
             throw std::runtime_error("failed to record begin command buffer \n");
         }
 
+        vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV, 0, 0, nullptr, 0, nullptr, 1, &depthImageBarrier);
+        vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV, 0, 0, nullptr, 0, nullptr, 1, &shadowImageBarrier);
+
         vkCmdBindPipeline(cmdBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipeline);
         vkCmdBindDescriptorSets(cmdBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
         vkCmdPushConstants(cmdBuffer, pipelineLayout, VK_SHADER_STAGE_RAYGEN_BIT_NV, 0, sizeof(pushData), &pushData);
@@ -348,6 +401,9 @@ public:
         }
     }
 
+    // textures
+    TextureEXT depthTexture;
+    TextureEXT shadowsTexture;
 private:
     // pipeline stuff
     VkPipeline pipeline;
@@ -359,9 +415,9 @@ private:
     VkWriteDescriptorSet writeDescriptorSet;
     VkDescriptorBufferInfo descriptorBufferInfo;
 
-    // textures
-    TextureEXT depthTexture;
-    TextureEXT shadowsTexture;
+    VkImageMemoryBarrier depthImageBarrier;
+    VkImageMemoryBarrier shadowImageBarrier;
+
 
     // shader binding table
     VkBuffer sbtBuffer;

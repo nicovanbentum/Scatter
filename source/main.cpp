@@ -26,6 +26,7 @@ int main() {
             app.update(10.0f);
         }
         catch (const std::exception& e) {
+            std::cerr << "Exception occured!\n";
             std::cerr << e.what() << std::endl;
             system("pause");
             return EXIT_FAILURE;

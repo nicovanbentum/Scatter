@@ -6,11 +6,10 @@
 
 namespace scatter {
 
-void VulkanRenderSequence::init(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager) {
-    createDepthTexture(device, allocator, swapchain);
+void VulkanRenderSequence::init(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, const VulkanSwapchain& swapchain, VulkanShaderManager& shaderManager, VkImageView depthView) {
     createRenderPass(device, swapchain);
     createGraphicsPipeline(device, descriptorPool, swapchain, shaderManager);
-    createFramebuffers(device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
+    createFramebuffers(device, swapchain.swapChainImageViews, swapchain.swapChainExtent, depthView);
     createDescriptorSets(device, allocator, descriptorPool);
     updateDescriptorSet(device, allocator);
 }
@@ -22,7 +21,6 @@ void VulkanRenderSequence::destroyFramebuffers(VkDevice device) {
 }
 
 void VulkanRenderSequence::destroy(VkDevice device, VmaAllocator allocator) {
-    destroyDepthTexture(device, allocator);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
     for (auto framebuffer : framebuffers) {
@@ -32,11 +30,6 @@ void VulkanRenderSequence::destroy(VkDevice device, VmaAllocator allocator) {
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
     vmaDestroyBuffer(allocator, uniformBuffer, uniformBufferAlloc);
-}
-
-void VulkanRenderSequence::destroyDepthTexture(VkDevice device, VmaAllocator allocator) {
-    vkDestroyImageView(device, depthImageView, nullptr);
-    vmaDestroyImage(allocator, depthImage, depthImageAlloc);
 }
 
 void VulkanRenderSequence::createRenderPass(VkDevice device, const VulkanSwapchain& swapchain) {
@@ -269,11 +262,11 @@ void VulkanRenderSequence::createGraphicsPipeline(VkDevice device, VkDescriptorP
     }
 }
 
-void VulkanRenderSequence::createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent) {
+void VulkanRenderSequence::createFramebuffers(VkDevice device, const std::vector<VkImageView>& imageViews, VkExtent2D extent, VkImageView depthView) {
     framebuffers.resize(imageViews.size());
     for (size_t i = 0; i < imageViews.size(); i++) {
 
-        std::array<VkImageView, 2> attachments = { imageViews[i], depthImageView };
+        std::array<VkImageView, 2> attachments = { imageViews[i], depthView };
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
@@ -344,45 +337,6 @@ void VulkanRenderSequence::createDescriptorSets(VkDevice device, VmaAllocator al
 void VulkanRenderSequence::updateDescriptorSet(VkDevice device, VmaAllocator allocator) {
     memcpy(uniformBufferAllocInfo.pMappedData, &uniforms, uniformBufferAllocInfo.size);
     vmaFlushAllocation(allocator, uniformBufferAlloc, 0, uniformBufferAllocInfo.size);
-}
-
-void VulkanRenderSequence::createDepthTexture(VkDevice device, VmaAllocator allocator, const VulkanSwapchain& swapchain) {
-    VkImageCreateInfo imageInfo = {};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent.width = swapchain.swapChainExtent.width;
-    imageInfo.extent.height = swapchain.swapChainExtent.height;
-    imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.format = VK_FORMAT_D32_SFLOAT;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VmaAllocationCreateInfo imageAllocCreateInfo = {};
-    imageAllocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    if (vmaCreateImage(allocator, &imageInfo, &imageAllocCreateInfo, &depthImage, &depthImageAlloc, &depthImageAllocInfo) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create depth image");
-    }
-
-    VkImageViewCreateInfo viewInfo = {};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = depthImage;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = VK_FORMAT_D32_SFLOAT;
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(device, &viewInfo, nullptr, &depthImageView) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create texture image view!");
-    }
 }
 
 void VulkanRenderSequence::recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VmaAllocator allocator, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex) {

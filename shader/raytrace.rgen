@@ -3,9 +3,12 @@
 #extension GL_NV_ray_tracing : require
 
 layout(binding = 0, set = 0) uniform accelerationStructureNV AS;
+
 layout(binding = 1, set = 0, rgba8) uniform writeonly image2D shadowTexture;
+
 layout(binding = 2, set = 0) uniform sampler2D depthTexture;
 
+// final value we write to the shadow texture
 struct Payload {
     vec3 value;
 };

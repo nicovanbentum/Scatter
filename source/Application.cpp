@@ -48,11 +48,6 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     shaderManager.addShader("shader/raytrace.rgen.spv");
     shaderManager.addShader("shader/raytrace.rmiss.spv");
 
-    renderSequence.uniforms.projection = glm::perspectiveRH(glm::radians(75.0f), 16.0f / 9.0f, 0.1f, 10000.0f);
-    renderSequence.uniforms.view = glm::lookAtRH(glm::vec3(2, 4, -5), glm::vec3(0, 0, 0), { 0, 1, 0 });
-
-    renderSequence.init(device.device, device.allocator, device.descriptorPool, swapchain, shaderManager);
-
     auto& obj = objects.emplace_back();
     obj.createSphere();
 
@@ -144,6 +139,10 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
     shadowSequence.createImages(device.device, swapchain.swapChainExtent, &memoryProperties);
 
+    renderSequence.uniforms.projection = glm::perspectiveRH(glm::radians(75.0f), 16.0f / 9.0f, 0.1f, 10000.0f);
+    renderSequence.uniforms.view = glm::lookAtRH(glm::vec3(2, 4, -5), glm::vec3(0, 0, 0), { 0, 1, 0 });
+    renderSequence.init(device.device, device.allocator, device.descriptorPool, swapchain, shaderManager, shadowSequence.depthTexture.view);
+
     // setup descriptor sets
     shadowSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool, topLevelAS.as);
 
@@ -169,12 +168,8 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     }
 
     // record ray trace command buffers
-    device.rtCmdBuffers.resize(renderSequence.getFramebuffersCount());
     device.createRtCommandBuffers();
-
-    for (size_t i = 0; i < device.rtCmdBuffers.size(); i++) {
-        shadowSequence.record(device.device, device.rtCmdBuffers[i], swapchain.swapChainExtent.width, swapchain.swapChainExtent.height, rtProps);
-    }
+    shadowSequence.record(device.device, device.raytraceCommands, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height, rtProps);
 
     createSyncObjects();
 }
@@ -190,6 +185,8 @@ void VulkanApplication::destroy() {
         vkDestroySemaphore(device.device, renderFinishedSemaphore[i], nullptr);
         vkDestroyFence(device.device, inFlightFences[i], nullptr);
     }
+
+    vkDestroyFence(device.device, raytracingDoneFence, nullptr);
 
     shaderManager.destroy();
 
@@ -297,15 +294,20 @@ void VulkanApplication::drawFrame() {
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
+
+    VkCommandBuffer cmdBuffers[] = { device.commandBuffers[imageIndex] };
+
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &device.commandBuffers[imageIndex];
+    submitInfo.pCommandBuffers = cmdBuffers;
+
     VkSemaphore signalSemaphores[] = { renderFinishedSemaphore[currentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     vkResetFences(device.device, 1, &inFlightFences[currentFrame]);
 
-    if (vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
+    if (auto submit = vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]); submit != VK_SUCCESS) {
+        std::cout << submit << std::endl;
         throw std::runtime_error("failed to submit draw command buffer! \n");
     }
 
@@ -329,6 +331,25 @@ void VulkanApplication::drawFrame() {
         throw std::runtime_error("failed to present swap chain image! \n");
     }
 
+    VkSubmitInfo rtSubmit = {};
+    rtSubmit.commandBufferCount = 1;
+    rtSubmit.sType = VkStructureType::VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    rtSubmit.pCommandBuffers = &device.raytraceCommands;
+
+    VkShaderStageFlags waitFlags = VkPipelineStageFlagBits::VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
+    rtSubmit.pWaitDstStageMask = &waitFlags;
+    rtSubmit.waitSemaphoreCount = 1;
+    rtSubmit.pWaitSemaphores = signalSemaphores;
+
+    //vkWaitForFences(device.device, 1, &raytracingDoneFence, VK_TRUE, UINT64_MAX);
+
+    vkResetFences(device.device, 1, &raytracingDoneFence);
+
+    //if (auto submit = vkQueueSubmit(device.graphicsQueue, 1, &rtSubmit, raytracingDoneFence); submit != VK_SUCCESS) {
+    //    std::cout << submit << std::endl;
+    //    throw std::runtime_error("failed to submit RT commands");
+    //}
+
     currentFrame = (currentFrame + 1) % MAX_FRAME_IN_FLIGHT;
 }
 
@@ -345,18 +366,38 @@ void VulkanApplication::recreateSwapChain() {
     vkDeviceWaitIdle(device.device);
 
     swapchain.destroy(device.device);
-    renderSequence.destroyDepthTexture(device.device, device.allocator);
     renderSequence.destroyFramebuffers(device.device);
+    shadowSequence.destroyImages(device.device);
 
     swapchain.init(window, device);
-    renderSequence.createDepthTexture(device.device, device.allocator, swapchain);
-    renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent);
+    
+    // create the depth and shadow textures
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
+    shadowSequence.createImages(device.device, swapchain.swapChainExtent, &memoryProperties);
+    shadowSequence.updateImages(device.device);
+    
+    renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent, shadowSequence.depthTexture.view);
  
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
         renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
     }
+
+    VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
+        .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
+    };
+
+    VkPhysicalDeviceProperties2 pdProps = {
+        .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+        .pNext = &rtProps
+    };
+
+    vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
+
+    device.createRtCommandBuffers();
+    shadowSequence.record(device.device, device.raytraceCommands, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height, rtProps);
 
 }
 
@@ -382,6 +423,8 @@ void VulkanApplication::createSyncObjects() {
             std::cout << "successfully created semaphores! \n";
         }
     }
+
+    vkCreateFence(device.device, &fenceInfo, nullptr, &raytracingDoneFence);
 }
 
 } // scatter

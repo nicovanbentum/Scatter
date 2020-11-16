@@ -49,7 +49,7 @@ private:
 
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
-    std::vector<VkCommandBuffer> rtCmdBuffers;
+    VkCommandBuffer raytraceCommands;
 
     VkDescriptorPool descriptorPool;
 
