@@ -27,9 +27,6 @@
     <ClCompile Include="source\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\PipelineManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\RenderSequence.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -77,9 +74,6 @@
     <ClInclude Include="header\Device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\PipelineManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\RenderSequence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -107,9 +101,6 @@
     <ClInclude Include="header\VulkanBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\UniformBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\AccelStructure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\Scatter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -30,7 +30,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="source\PipelineManager.cpp" />
     <ClCompile Include="source\RenderSequence.cpp" />
     <ClCompile Include="source\Shader.cpp" />
     <ClCompile Include="source\ShaderManager.cpp" />
@@ -44,14 +43,13 @@
     <ClInclude Include="header\HelloTriangleApplication.h" />
     <ClInclude Include="header\Object.h" />
     <ClInclude Include="header\pch.h" />
-    <ClInclude Include="header\PipelineManager.h" />
     <ClInclude Include="header\RenderSequence.h" />
+    <ClInclude Include="header\Scatter.h" />
     <ClInclude Include="header\Shader.h" />
     <ClInclude Include="header\ShaderManager.h" />
     <ClInclude Include="header\Swapchain.h" />
     <ClInclude Include="header\Texture.h" />
     <ClInclude Include="header\Application.h" />
-    <ClInclude Include="header\UniformBuffer.h" />
     <ClInclude Include="header\Util.h" />
     <ClInclude Include="header\Vertex.h" />
     <ClInclude Include="header\VulkanBuffer.h" />

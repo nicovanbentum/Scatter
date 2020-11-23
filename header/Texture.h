@@ -4,19 +4,6 @@
 
 namespace scatter {
 
-inline uint32_t getMemoryIndex(VkPhysicalDeviceMemoryProperties* physicalProperties, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-    for (uint32_t i = 0; i < physicalProperties->memoryTypeCount; i++) {
-        if ((typeFilter & (1 << i)) && (physicalProperties->memoryTypes[i].propertyFlags & properties) == properties) {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("failed to find suitable memory type!");
-}
-
-/*
-    Textures in Scatter are purely used for rendering operations
-*/
 struct TextureCreateInfo {
     VkExtent2D extent;
     VkFormat format;
@@ -34,7 +21,7 @@ public:
     
     void destroy(VkDevice device);
 
-public: // in Vulkan style, we keep things accessible
+public:
     VkImage image;
     VkDeviceMemory memory;
 

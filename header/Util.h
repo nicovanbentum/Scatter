@@ -4,7 +4,7 @@
 
 namespace scatter {
 
-static void ImageMemoryBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageAspectFlags aspectFlags, const VkAccessFlags srcAccessMask, 
+inline static void ImageMemoryBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageAspectFlags aspectFlags, const VkAccessFlags srcAccessMask, 
 	const VkAccessFlags dstAccessMask, const VkImageLayout oldLayout, const VkImageLayout newLayout) {
 	VkImageMemoryBarrier barrier = {};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;

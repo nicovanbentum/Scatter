@@ -7,7 +7,7 @@
 #include "Swapchain.h"
 #include "ShaderManager.h"
 #include "AccelStructure.h"
-#include "PipelineManager.h"
+#include "RenderSequence.h"
 
 namespace scatter {
 
@@ -32,7 +32,6 @@ private:
     VulkanRenderSequence renderSequence;
     RayTracedShadowsSequence shadowSequence;
     VulkanShaderManager shaderManager;
-    VulkanPipelineManager pipelineManager;
 
     std::vector<Object> objects;
     VulkanBuffer vertexBuffer;

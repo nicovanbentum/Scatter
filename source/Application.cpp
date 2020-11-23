@@ -8,7 +8,8 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
+
+    window = glfwCreateWindow(width, height, "Scatter - Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
 
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
@@ -19,6 +20,8 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     device.init(window);
     swapchain.init(window, device);
     shaderManager.init(device.device);
+
+    const auto extent = swapchain.swapChainExtent;
 
     objects.emplace_back().createSphere(2.0f);
 
@@ -72,7 +75,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         geometries.push_back(geometry);
     }
 
-    // create scene acceleration structure for ray tracing 
+    // create bottom level acceleration structure 
     VkAccelerationStructureCreateInfoNV BLAScreateInfo{};
     BLAScreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
     BLAScreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
@@ -84,6 +87,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     bottomLevelAS.init(device.device, device.allocator, &BLAScreateInfo);
     bottomLevelAS.record(device, &BLAScreateInfo);
 
+    // create top level acceleration structure
     VkAccelerationStructureCreateInfoNV TLAScreateInfo{};
     TLAScreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
     TLAScreateInfo.info.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_INFO_NV;
@@ -94,40 +98,24 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     instance.BLAS = bottomLevelAS.as;
     instance.hitGroupIndex = 0;
     instance.instanceID = 0;
-    instance.transform = glm::mat4(1.0f);
+    instance.transform = glm::translate(glm::mat4(1.0f), glm::vec3(0, 5, 0));
 
     topLevelAS.init(device.device, device.allocator, &TLAScreateInfo);
     topLevelAS.record(device, &instance, &TLAScreateInfo);
 
-
-    shadowSequence.createPipeline(device.device, device.descriptorPool, swapchain, shaderManager);
-    
-    // create the depth and shadow textures
-    VkPhysicalDeviceMemoryProperties memoryProperties;
-    vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
-    shadowSequence.createImages(device.device, swapchain.swapChainExtent, &memoryProperties);
-
+    // set uniform data
     renderSequence.uniforms.projection = glm::perspectiveRH(glm::radians(75.0f), 16.0f / 9.0f, 0.1f, 100.0f);
     renderSequence.uniforms.view = glm::lookAtRH(glm::vec3(2, 4, -5), glm::vec3(0, 0, 0), { 0, 1, 0 });
+    shadowSequence.pushData.inverseViewProjection = glm::inverse(renderSequence.uniforms.projection * renderSequence.uniforms.view);
+    
+    // init both render sequences
+    shadowSequence.init(device.device, device.allocator, device.physicalDevice, shaderManager, extent);
     renderSequence.init(device.device, device.allocator, device.descriptorPool, swapchain, shaderManager, shadowSequence.depthTexture.view);
 
     // setup descriptor sets
-    shadowSequence.pushData.inverseViewProjection = glm::inverse(renderSequence.uniforms.projection * renderSequence.uniforms.view);
+    renderSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool);
+    renderSequence.updateDescriptorSet(device.device, device.allocator);
     shadowSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool, topLevelAS.as);
-
-    // setup Shader Binding Table
-    VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
-        .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
-    };
-
-    VkPhysicalDeviceProperties2 pdProps = {
-        .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-        .pNext = &rtProps
-    };
-
-    vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
-
-    shadowSequence.createSbtTable(device.device, device.allocator, rtProps);
 
     // allocate command buffers
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
@@ -145,6 +133,17 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         }
 
         const auto extent = swapchain.swapChainExtent;
+
+        VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
+            .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
+        };
+
+        VkPhysicalDeviceProperties2 pdProps = {
+            .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+            .pNext = &rtProps
+        };
+
+        vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
 
         renderSequence.execute(device.device, device.commandBuffers[i], device.allocator, extent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
         shadowSequence.execute(device.device, device.commandBuffers[i], extent.width, extent.height, rtProps);

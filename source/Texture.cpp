@@ -3,6 +3,16 @@
 
 namespace scatter {
 
+static uint32_t getMemoryIndex(VkPhysicalDeviceMemoryProperties* physicalProperties, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    for (uint32_t i = 0; i < physicalProperties->memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (physicalProperties->memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("failed to find suitable memory type!");
+}
+
 TextureEXT::TextureEXT() : image(nullptr), memory(nullptr), view(nullptr), sampler(nullptr) {}
 
 TextureEXT::TextureEXT(VkDevice device, TextureCreateInfo* info, VkPhysicalDeviceMemoryProperties* properties) : TextureEXT() {
