@@ -18,6 +18,7 @@ layout(push_constant) uniform pushConstants {
 
 void main()
 {
-	gl_Position = uniforms.projection * uniforms.view * pc.model * vec4(inPosition, 1.0);
-	fragColor = normal * .5 + .5;
+    vec4 worldPos = pc.model * vec4(inPosition, 1.0);
+	gl_Position = uniforms.projection * uniforms.view * worldPos;
+	fragColor = worldPos.rgb;
 }

@@ -5,6 +5,7 @@
 #include "VulkanBuffer.h"
 #include "Object.h"
 #include "Texture.h"
+#include "Util.h"
 
 #include <string.h>
 
@@ -28,7 +29,7 @@ public:
     void createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
     void updateDescriptorSet(VkDevice device, VmaAllocator allocator);
 
-    void recordCommandBuffer(VkDevice device, VkCommandBuffer commandBuffer, VmaAllocator allocator, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex);
+    void execute(VkDevice device, VkCommandBuffer commandBuffer, VmaAllocator allocator, VkExtent2D extent, VkBuffer vertexBuffer, VkBuffer indexBuffer, const std::vector<Object>& objects, size_t framebufferIndex);
 
     size_t getFramebuffersCount() { return framebuffers.size(); }
 
@@ -72,7 +73,7 @@ inline uint32_t findMemoryType(VkPhysicalDevice GPU, uint32_t typeFilter, VkMemo
 class RayTracedShadowsSequence {
 public:
     struct {
-        glm::vec3 lightDirection = { 0, -1, 0 };
+        glm::vec4 lightDirection = { 0, -1, 0, 1.0 };
         glm::mat4 inverseViewProjection = glm::mat4(1.0f);
     } pushData;
 
@@ -106,27 +107,6 @@ public:
 
         shadowsTexture = TextureEXT(device, &shadowTextureInfo, memProperties);
         shadowsTexture.createView(device, &shadowTextureInfo);
-
-        // barrier for sampling depth image
-        depthImageBarrier = {};
-        depthImageBarrier.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        depthImageBarrier.newLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
-        depthImageBarrier.image = depthTexture.image;
-        depthImageBarrier.srcAccessMask = VkAccessFlagBits::VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-        depthImageBarrier.dstAccessMask = VkAccessFlagBits::VK_ACCESS_SHADER_READ_BIT;
-        depthImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        depthImageBarrier.subresourceRange.levelCount = 1;
-        depthImageBarrier.subresourceRange.layerCount = 1;
-
-        shadowImageBarrier = {};
-        shadowImageBarrier.sType = VkStructureType::VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        shadowImageBarrier.newLayout = VkImageLayout::VK_IMAGE_LAYOUT_GENERAL;
-        shadowImageBarrier.image = shadowsTexture.image;
-        shadowImageBarrier.srcAccessMask = VkAccessFlagBits::VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-        shadowImageBarrier.dstAccessMask = VkAccessFlagBits::VK_ACCESS_SHADER_WRITE_BIT;
-        shadowImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        shadowImageBarrier.subresourceRange.levelCount = 1;
-        shadowImageBarrier.subresourceRange.layerCount = 1;
     }
 
     void destroyImages(VkDevice device) {
@@ -237,7 +217,13 @@ public:
         missShaderInfo.module = shaderManager.getShader("shader/raytrace.rmiss.spv");
         missShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 
-        std::array<VkPipelineShaderStageCreateInfo, 2> shaderStages = { raygenShaderInfo, missShaderInfo };
+        VkPipelineShaderStageCreateInfo hitShaderInfo{};
+        hitShaderInfo.pName = "main";
+        hitShaderInfo.stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_NV;
+        hitShaderInfo.module = shaderManager.getShader("shader/raytrace.rchit.spv");
+        hitShaderInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+
+        std::array<VkPipelineShaderStageCreateInfo, 3> shaderStages = { raygenShaderInfo, missShaderInfo, hitShaderInfo };
 
         //// descriptor set bindings ////
         VkDescriptorSetLayoutBinding TLASbinding = {};
@@ -292,16 +278,24 @@ public:
 
         /// define the groups, a miss group and raygen group
         VkRayTracingShaderGroupCreateInfoNV group = {};
-        group.generalShader         = 0;
+        group.generalShader         = VK_SHADER_UNUSED_NV;
         group.anyHitShader          = VK_SHADER_UNUSED_NV;
         group.closestHitShader      = VK_SHADER_UNUSED_NV;
         group.intersectionShader    = VK_SHADER_UNUSED_NV;
         group.sType                 = VkStructureType::VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
         group.type                  = VkRayTracingShaderGroupTypeNV::VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
 
-        groups.push_back(group);
-        group.generalShader = 1;
-        groups.push_back(group);
+        // raygen
+        groups.emplace_back(group).generalShader = 0;
+        groups.back().type = VkRayTracingShaderGroupTypeNV::VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
+
+        // miss
+        groups.emplace_back(group).generalShader = 1;
+        groups.back().type = VkRayTracingShaderGroupTypeNV::VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_NV;
+
+        // closest hit
+        groups.emplace_back(group).closestHitShader = 2;
+        groups.back().type = VkRayTracingShaderGroupTypeNV::VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
 
         VkRayTracingPipelineCreateInfoNV pipelineInfo = {};
         pipelineInfo.basePipelineIndex  = 0;
@@ -323,11 +317,9 @@ public:
     void createSbtTable(VkDevice device, VmaAllocator allocator, const VkPhysicalDeviceRayTracingPropertiesNV& rtProps) {
         const uint32_t groupCount = static_cast<uint32_t>(groups.size());
         const uint32_t sbtSize = groupCount * rtProps.shaderGroupBaseAlignment;
-        std::vector<uint8_t> shaderHandles(sbtSize);
 
-        if (vk_nv_ray_tracing::vkGetRayTracingShaderGroupHandlesNV(device, pipeline, 0, groupCount, sbtSize, shaderHandles.data()) != VK_SUCCESS) {
-            throw std::runtime_error("failed to get rt shader group handles");
-        }
+        std::cout << "base alignment " << rtProps.shaderGroupBaseAlignment << std::endl;
+        std::cout << "group handle size " << rtProps.shaderGroupHandleSize << std::endl;
 
         VkBufferCreateInfo sbtBufferCreateInfo = {};
         sbtBufferCreateInfo.size = sbtSize;
@@ -347,10 +339,17 @@ public:
             std::puts("creates sbtbuffer!!!");
         }
 
-        auto* pData = reinterpret_cast<uint8_t*>(allocInfo.pMappedData);
-        for (uint32_t g = 0; g < groupCount; g++) {
-            std::memcpy(pData, groups.data() + g * rtProps.shaderGroupHandleSize, rtProps.shaderGroupHandleSize);
-            pData += rtProps.shaderGroupBaseAlignment;
+        std::vector<uint8_t> shaderHandleStorage(sbtSize);
+
+        if (vk_nv_ray_tracing::vkGetRayTracingShaderGroupHandlesNV(device, pipeline, 0, groupCount, sbtSize, shaderHandleStorage.data()) != VK_SUCCESS) {
+            throw std::runtime_error("failed to get rt shader group handles");
+        }
+
+        auto* data = static_cast<uint8_t*>(allocInfo.pMappedData);
+
+        for (uint32_t group = 0; group < groupCount; group++) {
+            memcpy(data, shaderHandleStorage.data() + group * rtProps.shaderGroupHandleSize, rtProps.shaderGroupHandleSize);
+            data += rtProps.shaderGroupBaseAlignment;
         }
     }
 
@@ -366,39 +365,32 @@ public:
         vmaDestroyBuffer(allocator, sbtBuffer, sbtAlloc);
     }
 
-    void record(VkDevice device, VkCommandBuffer cmdBuffer, uint32_t width, uint32_t height, const VkPhysicalDeviceRayTracingPropertiesNV& rtProps) {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = 0;
-        beginInfo.pInheritanceInfo = nullptr;
+    void execute(VkDevice device, VkCommandBuffer cmdBuffer, uint32_t width, uint32_t height, const VkPhysicalDeviceRayTracingPropertiesNV& rtProps) {
+        // acquire textures for ray tracing use
+        ImageMemoryBarrier(cmdBuffer, depthTexture.image, VK_IMAGE_ASPECT_DEPTH_BIT, 
+            0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-        if (vkBeginCommandBuffer(cmdBuffer, &beginInfo) != VK_SUCCESS) {
-            throw std::runtime_error("failed to record begin command buffer \n");
-        }
+        ImageMemoryBarrier(cmdBuffer, shadowsTexture.image, VK_IMAGE_ASPECT_COLOR_BIT,
+            0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-        vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV, 0, 0, nullptr, 0, nullptr, 1, &depthImageBarrier);
-        vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV, 0, 0, nullptr, 0, nullptr, 1, &shadowImageBarrier);
-
-        vkCmdBindPipeline(cmdBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipeline);
-        vkCmdBindDescriptorSets(cmdBuffer, VkPipelineBindPoint::VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+        // bind the pipeline and resources
+        vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipeline);
+        vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
         vkCmdPushConstants(cmdBuffer, pipelineLayout, VK_SHADER_STAGE_RAYGEN_BIT_NV, 0, sizeof(pushData), &pushData);
     
-        VkDeviceSize progSize = rtProps.shaderGroupBaseAlignment;  // Size of a program identifier
-        VkDeviceSize rayGenOffset   = 0u * progSize;  // Start at the beginning of m_sbtBuffer
-        VkDeviceSize missOffset     = 1u * progSize;  // Jump over raygen
-        VkDeviceSize missStride     = progSize;
+        VkDeviceSize rayGenOffset   = 0;  // Start at the beginning of m_sbtBuffer
+        VkDeviceSize missOffset     = 1u * rtProps.shaderGroupBaseAlignment;  // Jump over raygen
+        VkDeviceSize missStride     = rtProps.shaderGroupHandleSize;
+        VkDeviceSize hitOffset      = 2u * rtProps.shaderGroupBaseAlignment;
+        VkDeviceSize hitStride      = rtProps.shaderGroupHandleSize;
 
         vk_nv_ray_tracing::vkCmdTraceRaysNV(cmdBuffer, 
             sbtBuffer, rayGenOffset, // raygen group 
-            sbtBuffer, missOffset, missStride, 
-            VK_NULL_HANDLE, 0, 0, 
+            sbtBuffer, missOffset, missStride,
+            sbtBuffer, hitOffset, hitStride,
             VK_NULL_HANDLE, 0, 0, 
             width, height, 1
         );
-
-        if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS) {
-            throw std::runtime_error("failed to record command buffer! \n");
-        }
     }
 
     // textures
@@ -414,10 +406,6 @@ private:
     VkDescriptorSetLayout descriptorSetLayout;
     VkWriteDescriptorSet writeDescriptorSet;
     VkDescriptorBufferInfo descriptorBufferInfo;
-
-    VkImageMemoryBarrier depthImageBarrier;
-    VkImageMemoryBarrier shadowImageBarrier;
-
 
     // shader binding table
     VkBuffer sbtBuffer;

@@ -4,29 +4,6 @@
 
 namespace scatter {
 
-class Camera {
-    glm::mat4 getViewMatrix() {
-        return glm::lookAtRH(position, position + getDirection(), { 0, 1, 0 });
-    }
-
-    glm::vec3 getDirection() {
-        return glm::vec3(cos(angle.y) * sin(angle.x),
-            sin(angle.y), cos(angle.y) * cos(angle.x));
-    }
-
-    glm::mat4 getProjectionMatrix() {
-        glm::perspectiveRH(glm::radians(75.0f), 16.0f / 9.0f, 0.1f, 10000.0f);
-    }
-
-    void strafe() {
-
-    }
-    
-private:
-    glm::vec2 angle;
-    glm::vec3 position;
-};
-
 void VulkanApplication::init(uint32_t width, uint32_t height) {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -34,25 +11,16 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
     glfwSetWindowUserPointer(window, this);
 
-    auto framebufferResizeCallback = [](GLFWwindow* window, int width, int height) {
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
         app->frameBufferResized = true;
-    };
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    });
+    
     device.init(window);
     swapchain.init(window, device);
-
     shaderManager.init(device.device);
-    shaderManager.addShader("shader/vert.spv");
-    shaderManager.addShader("shader/frag.spv");
-    shaderManager.addShader("shader/raytrace.rgen.spv");
-    shaderManager.addShader("shader/raytrace.rmiss.spv");
 
-    auto& obj = objects.emplace_back();
-    obj.createSphere();
-
-    obj.vertexOffset = 0;
-    obj.indexOffset = 0;
+    objects.emplace_back().createSphere(2.0f);
 
     // calculate reservation sizes
     size_t allVerticesSize = 0, allIndicesSize = 0;
@@ -87,13 +55,13 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
         triangle.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
         triangle.vertexData = vertexBuffer.getBuffer();
-        triangle.vertexOffset = obj.vertexOffset;
-        triangle.vertexCount = static_cast<uint32_t>(obj.vertices.size());
+        triangle.vertexOffset = object.vertexOffset;
+        triangle.vertexCount = static_cast<uint32_t>(object.vertices.size());
         triangle.vertexStride = sizeof(Vertex);
         triangle.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
         triangle.indexData = indexBuffer.getBuffer();
         triangle.indexOffset = 0;
-        triangle.indexCount = static_cast<uint32_t>(obj.indices.size());
+        triangle.indexCount = static_cast<uint32_t>(object.indices.size());
         triangle.indexType = VK_INDEX_TYPE_UINT16;
         triangle.transformData = VK_NULL_HANDLE;
         triangle.transformOffset = 0;
@@ -139,11 +107,12 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
     shadowSequence.createImages(device.device, swapchain.swapChainExtent, &memoryProperties);
 
-    renderSequence.uniforms.projection = glm::perspectiveRH(glm::radians(75.0f), 16.0f / 9.0f, 0.1f, 10000.0f);
+    renderSequence.uniforms.projection = glm::perspectiveRH(glm::radians(75.0f), 16.0f / 9.0f, 0.1f, 100.0f);
     renderSequence.uniforms.view = glm::lookAtRH(glm::vec3(2, 4, -5), glm::vec3(0, 0, 0), { 0, 1, 0 });
     renderSequence.init(device.device, device.allocator, device.descriptorPool, swapchain, shaderManager, shadowSequence.depthTexture.view);
 
     // setup descriptor sets
+    shadowSequence.pushData.inverseViewProjection = glm::inverse(renderSequence.uniforms.projection * renderSequence.uniforms.view);
     shadowSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool, topLevelAS.as);
 
     // setup Shader Binding Table
@@ -160,16 +129,30 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 
     shadowSequence.createSbtTable(device.device, device.allocator, rtProps);
 
+    // allocate command buffers
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
 
+    // record command buffers
     for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
-    }
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0;
+        beginInfo.pInheritanceInfo = nullptr;
 
-    // record ray trace command buffers
-    device.createRtCommandBuffers();
-    shadowSequence.record(device.device, device.raytraceCommands, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height, rtProps);
+        if (vkBeginCommandBuffer(device.commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record begin command buffer \n");
+        }
+
+        const auto extent = swapchain.swapChainExtent;
+
+        renderSequence.execute(device.device, device.commandBuffers[i], device.allocator, extent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
+        shadowSequence.execute(device.device, device.commandBuffers[i], extent.width, extent.height, rtProps);
+
+        if (vkEndCommandBuffer(device.commandBuffers[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record command buffer! \n");
+        }
+    }
 
     createSyncObjects();
 }
@@ -185,8 +168,6 @@ void VulkanApplication::destroy() {
         vkDestroySemaphore(device.device, renderFinishedSemaphore[i], nullptr);
         vkDestroyFence(device.device, inFlightFences[i], nullptr);
     }
-
-    vkDestroyFence(device.device, raytracingDoneFence, nullptr);
 
     shaderManager.destroy();
 
@@ -248,16 +229,6 @@ void VulkanApplication::update(float dt) {
             input = true;
         }
 
-        if (input) {
-
-            device.commandBuffers.resize(renderSequence.getFramebuffersCount());
-            device.createCommandBuffers();
-            for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-                renderSequence.updateDescriptorSet(device.device, device.allocator);
-                renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
-            }
-        }
-
         dt = std::chrono::duration<float, std::milli>(std::chrono::high_resolution_clock::now() - t1).count() / 1000;
         std::string title = "Scatter - " + std::to_string(int(1.0f / dt)) + " fps";
         glfwSetWindowTitle(window, title.c_str());
@@ -290,7 +261,7 @@ void VulkanApplication::drawFrame() {
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     VkSemaphore waitSemaphores[] = { imageAvailableSemaphore[currentFrame] };
-    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+    VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
@@ -331,25 +302,6 @@ void VulkanApplication::drawFrame() {
         throw std::runtime_error("failed to present swap chain image! \n");
     }
 
-    VkSubmitInfo rtSubmit = {};
-    rtSubmit.commandBufferCount = 1;
-    rtSubmit.sType = VkStructureType::VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    rtSubmit.pCommandBuffers = &device.raytraceCommands;
-
-    VkShaderStageFlags waitFlags = VkPipelineStageFlagBits::VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
-    rtSubmit.pWaitDstStageMask = &waitFlags;
-    rtSubmit.waitSemaphoreCount = 1;
-    rtSubmit.pWaitSemaphores = signalSemaphores;
-
-    //vkWaitForFences(device.device, 1, &raytracingDoneFence, VK_TRUE, UINT64_MAX);
-
-    vkResetFences(device.device, 1, &raytracingDoneFence);
-
-    //if (auto submit = vkQueueSubmit(device.graphicsQueue, 1, &rtSubmit, raytracingDoneFence); submit != VK_SUCCESS) {
-    //    std::cout << submit << std::endl;
-    //    throw std::runtime_error("failed to submit RT commands");
-    //}
-
     currentFrame = (currentFrame + 1) % MAX_FRAME_IN_FLIGHT;
 }
 
@@ -379,11 +331,9 @@ void VulkanApplication::recreateSwapChain() {
     
     renderSequence.createFramebuffers(device.device, swapchain.swapChainImageViews, swapchain.swapChainExtent, shadowSequence.depthTexture.view);
  
+    // re-allocate command buffers
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
-    for (size_t i = 0; i < device.commandBuffers.size(); i++) {
-        renderSequence.recordCommandBuffer(device.device, device.commandBuffers[i], device.allocator, swapchain.swapChainExtent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
-    }
 
     VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
         .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
@@ -396,8 +346,26 @@ void VulkanApplication::recreateSwapChain() {
 
     vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
 
-    device.createRtCommandBuffers();
-    shadowSequence.record(device.device, device.raytraceCommands, swapchain.swapChainExtent.width, swapchain.swapChainExtent.height, rtProps);
+    // record command buffers
+    for (size_t i = 0; i < device.commandBuffers.size(); i++) {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = 0;
+        beginInfo.pInheritanceInfo = nullptr;
+
+        if (vkBeginCommandBuffer(device.commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record begin command buffer \n");
+        }
+
+        const auto extent = swapchain.swapChainExtent;
+
+        renderSequence.execute(device.device, device.commandBuffers[i], device.allocator, extent, vertexBuffer.getBuffer(), indexBuffer.getBuffer(), objects, i);
+        shadowSequence.execute(device.device, device.commandBuffers[i], extent.width, extent.height, rtProps);
+
+        if (vkEndCommandBuffer(device.commandBuffers[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to record command buffer! \n");
+        }
+    }
 
 }
 
@@ -423,8 +391,6 @@ void VulkanApplication::createSyncObjects() {
             std::cout << "successfully created semaphores! \n";
         }
     }
-
-    vkCreateFence(device.device, &fenceInfo, nullptr, &raytracingDoneFence);
 }
 
 } // scatter

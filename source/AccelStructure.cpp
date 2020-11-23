@@ -49,7 +49,7 @@ void BottomLevelAS::record(VulkanDevice& device, VkAccelerationStructureCreateIn
     // get the memory requirements for the scratch buffer
     VkAccelerationStructureMemoryRequirementsInfoNV scratchRequirementsInfo{};
     scratchRequirementsInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-    scratchRequirementsInfo.type = VkAccelerationStructureMemoryRequirementsTypeNV::VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;;
+    scratchRequirementsInfo.type = VkAccelerationStructureMemoryRequirementsTypeNV::VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
     scratchRequirementsInfo.accelerationStructure = as;
 
     VkMemoryRequirements2 scratchRequirements;

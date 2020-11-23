@@ -52,6 +52,7 @@
     <ClInclude Include="header\Texture.h" />
     <ClInclude Include="header\Application.h" />
     <ClInclude Include="header\UniformBuffer.h" />
+    <ClInclude Include="header\Util.h" />
     <ClInclude Include="header\Vertex.h" />
     <ClInclude Include="header\VulkanBuffer.h" />
   </ItemGroup>

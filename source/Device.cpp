@@ -88,18 +88,6 @@ void VulkanDevice::createCommandBuffers() {
     }
 }
 
-void VulkanDevice::createRtCommandBuffers() {
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
-
-    if (vkAllocateCommandBuffers(device, &allocInfo, &raytraceCommands) != VK_SUCCESS) {
-        throw std::runtime_error("failed to allocate command buffers! \n");
-    }
-}
-
 std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> VulkanDevice::createStagingBuffer(size_t sizeInBytes) {
     VkBuffer stagingBuffer;
     VmaAllocation stagingAlloc;
@@ -214,11 +202,15 @@ bool VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
 
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
     for (const auto& extension : availableExtensions) {
-        std::cout << extension.extensionName << '\n';
         requiredExtensions.erase(extension.extensionName);
     }
     if (requiredExtensions.empty()) {
-        std::cout << "Extension supported by GPU \n";
+        std::cout << "all extensions supported by GPU \n";
+    } else {
+        std::cout << "Unsupported extensions found: \n";
+        for (const auto& ext : requiredExtensions) {
+            std::cout << ext << "\n";
+        }
     }
     return requiredExtensions.empty();
 }
@@ -268,9 +260,7 @@ void VulkanDevice::createInstance() {
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
-    for (const char* extension : extensions) {
-        std::cout << extension << '\n';
-    }
+    
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
     if (enableValidationLayers) {
         createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -283,6 +273,16 @@ void VulkanDevice::createInstance() {
         createInfo.pNext = nullptr;
     }
 
+    //// synchronization validation layers, pls save me
+    //std::vector<VkValidationFeatureEnableEXT> enables = { 
+    //    VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    //};
+    //VkValidationFeaturesEXT features = {};
+    //features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+    //features.enabledValidationFeatureCount = static_cast<uint32_t>(enables.size());
+    //features.pEnabledValidationFeatures = enables.data();
+    //createInfo.pNext = &features;
+
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
         throw std::runtime_error("failed to create instance! \n");
     } else {
@@ -293,10 +293,6 @@ void VulkanDevice::createInstance() {
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
     std::vector<VkExtensionProperties> extensionsSupported(extensionCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionsSupported.data());
-    std::cout << "available extension: \n";
-    for (const auto& extension : extensionsSupported) {
-        std::cout << '\t' << extension.extensionName << '\n';
-    }
 }
 
 void VulkanDevice::createSurface(GLFWwindow* window) {
@@ -322,10 +318,24 @@ void VulkanDevice::pickPhysicalDevice() {
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
     VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
+
     for (const auto& device : devices) {
         if (isDeviceSuitable(device)) {
             physicalDevice = device;
+            
+            auto rayTracing = []() {};
+            auto noRayTracing = []() {};
+
+            const uint32_t AMD = 0x1002;
+            const uint32_t NVIDIA = 0x10DE;
+
             vkGetPhysicalDeviceProperties(device, &deviceProperties);
+            if (deviceProperties.vendorID == AMD) {
+                rayTracing();
+            } else {
+                noRayTracing();
+            }
+
             vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
             break;
         }

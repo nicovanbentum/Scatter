@@ -8,15 +8,10 @@ layout(binding = 1, set = 0, rgba8) uniform writeonly image2D shadowTexture;
 
 layout(binding = 2, set = 0) uniform sampler2D depthTexture;
 
-// final value we write to the shadow texture
-struct Payload {
-    vec3 value;
-};
-
-layout(location = 0) rayPayloadNV Payload payload;
+layout(location = 0) rayPayloadNV vec3 payload;
 
 layout(push_constant) uniform pushConstants {
-    vec3 light_direction;
+    vec4 light_direction;
     mat4 inverseViewProjection;
 } pc;
 
@@ -34,17 +29,24 @@ void main() {
     float tMin = 0.001;
     float tMax = 10000.0;
 
+    // sample the current depth
     float depth = texture(depthTexture, uv).r;
 
-    if(depth == 1.0) return;
+    // if the current pixel was never rendered to early out
+    if(depth > 0.99999) return;
 
+    // reconstruct world position of pixel
     vec3 origin = worldPosFromDepth(uv, depth);
 
-    vec3 direction = normalize(-pc.light_direction);
+    // ray direction is the inverse of the light direction
+    vec3 direction = normalize(-pc.light_direction.xyz);
 
-    payload.value = vec3(0);
+    // everything is considered in shadow until we miss any geometry
+    payload = vec3(0);
 
     traceNV(AS, rayFlags, 0xFF, 0, 0, 0, origin, tMin, direction, tMax, 0);
 
-    imageStore(shadowTexture, ivec2(gl_LaunchIDNV.xy), vec4(payload.value, 1.0));
+    // store either the original 0, or 1 if the miss shader executed
+    // if the miss shader executes it means it was able to 'reach' the light from the current pixel's position
+    imageStore(shadowTexture, ivec2(gl_LaunchIDNV.xy), vec4(payload, 1.0));
 }

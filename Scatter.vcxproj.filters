@@ -116,6 +116,9 @@
     <ClInclude Include="header\Extensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="header\Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader\shader.frag" />

@@ -5,6 +5,6 @@
 layout(location = 0) rayPayloadInNV vec3 payload;
 
 void main() {
-    // if this shader executes it means it never hit any geometry on its way to the light
-    payload = vec3(1);
+    // debug colour
+    //payload = vec3(1, 0, 0);
 }

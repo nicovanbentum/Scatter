@@ -44,7 +44,6 @@ private:
     std::vector<VkSemaphore> renderFinishedSemaphore;
     std::vector<VkFence> inFlightFences;
     std::vector<VkFence> imagesInFlight;
-    VkFence raytracingDoneFence;
 
     GLFWwindow* window;
     VkSurfaceKHR surface;

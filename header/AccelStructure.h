@@ -24,18 +24,6 @@ struct Instance {
     VkAccelerationStructureNV BLAS;
 };
 
-struct ShaderInstance64 {
-    float transform[12];
-    uint32_t instanceId : 24;
-    uint32_t mask : 8;
-    uint32_t instanceOffset : 24;
-    uint32_t flags : 8;
-    uint64_t asHandle;
-    
-};
-
-static_assert(sizeof(ShaderInstance64) == 64, "incorrect size");
-
 struct TopLevelAS {
     VmaAllocation alloc;
     VmaAllocationInfo allocInfo;
@@ -76,23 +64,23 @@ struct TopLevelAS {
     }
 
     void record(VulkanDevice& device,  Instance* instances, VkAccelerationStructureCreateInfoNV* createInfo) {
-        auto shaderInstances = std::vector<ShaderInstance64>(createInfo->info.instanceCount);
+        std::vector<VkAccelerationStructureInstanceNV> shaderInstances{};
 
-        for (const auto& instance : std::span(instances, shaderInstances.size())) {
-            uint64_t asHandle = 0;
-            if (vk_nv_ray_tracing::vkGetAccelerationStructureHandleNV(device.device, instance.BLAS, sizeof(asHandle), &asHandle) != VK_SUCCESS) {
+        for (const Instance& instance : std::span(instances, createInfo->info.instanceCount)) {
+            uint64_t accelStructureRef = 0;
+            if (vk_nv_ray_tracing::vkGetAccelerationStructureHandleNV(device.device, instance.BLAS, sizeof(accelStructureRef), &accelStructureRef) != VK_SUCCESS) {
                 throw std::runtime_error("failed to get acceleration structure handle");
             }
 
-            auto shaderInstance = ShaderInstance64{
-                .instanceId = instance.instanceID,
+            VkAccelerationStructureInstanceNV shaderInstance {
+                .instanceCustomIndex = instance.instanceID,
                 .mask = 0xff,
-                .instanceOffset = instance.hitGroupIndex,
+                .instanceShaderBindingTableRecordOffset = instance.hitGroupIndex,
                 .flags = VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV,
-                .asHandle = asHandle
+                .accelerationStructureReference = accelStructureRef
             };
 
-            std::memcpy(shaderInstance.transform, glm::value_ptr(instance.transform), sizeof(shaderInstance.transform));
+            std::memcpy(&shaderInstance.transform, glm::value_ptr(instance.transform), sizeof(shaderInstance.transform));
 
             shaderInstances.push_back(shaderInstance);
         }
@@ -104,7 +92,7 @@ struct TopLevelAS {
         
         auto instanceBufferCreateInfo = VkBufferCreateInfo{
             .sType          = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            .size           = shaderInstances.size() * sizeof(ShaderInstance64),
+            .size           = shaderInstances.size() * sizeof(VkAccelerationStructureInstanceNV),
             .usage          = VkBufferUsageFlagBits::VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
             .sharingMode    = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE
         };
@@ -147,6 +135,8 @@ struct TopLevelAS {
 
         vk_nv_ray_tracing::vkCmdBuildAccelerationStructureNV(cmdBuffer, &createInfo->info, instancesBuffer, 0, VK_FALSE, as, VK_NULL_HANDLE, scratchBuffer, 0);
     
+        device.endSingleTimeCommands(cmdBuffer);
+
         // cleanup buffers
         vmaDestroyBuffer(device.allocator, scratchBuffer, scratchBufferAlloc);
         vmaDestroyBuffer(device.allocator, instancesBuffer, instancesBufferAlloc);
