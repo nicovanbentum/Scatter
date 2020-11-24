@@ -33,7 +33,10 @@ void main() {
     float depth = texture(depthTexture, uv).r;
 
     // if the current pixel was never rendered to early out
-    if(depth > 0.99999) return;
+    if(depth == 1.0 || depth > 0.99999) {
+        imageStore(shadowTexture, ivec2(gl_LaunchIDNV.xy), vec4(0));
+        return;
+    }
 
     // reconstruct world position of pixel
     vec3 origin = worldPosFromDepth(uv, depth);

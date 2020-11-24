@@ -645,7 +645,9 @@ void RayTracedShadowsSequence::createSbtTable(VkDevice device, VmaAllocator allo
     auto* data = static_cast<uint8_t*>(allocInfo.pMappedData);
 
     for (uint32_t group = 0; group < groupCount; group++) {
-        std::copy(shaderHandleStorage.data(), shaderHandleStorage.data() + group * rtProps.shaderGroupHandleSize, data);
+        const auto start = shaderHandleStorage.data() + group * rtProps.shaderGroupHandleSize;
+        const auto end = start + rtProps.shaderGroupHandleSize;
+        std::copy(start, end, data);
         data += rtProps.shaderGroupBaseAlignment;
     }
 }
