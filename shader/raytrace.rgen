@@ -21,6 +21,15 @@ vec3 worldPosFromDepth(vec2 uv, float depth) {
     return(worldPos.xyz / worldPos.w);
 }
 
+vec3 reconstructPosition(in vec2 uv, in float z, in mat4 InvVP) {
+  float x = uv.x * 2.0f - 1.0f;
+  float y = (uv.y) * 2.0f - 1.0f; // uv.y * -1 for d3d
+  vec4 position_s = vec4(x, y, z, 1.0f);
+  vec4 position_v = InvVP * position_s;
+  vec3 div = position_v.xyz / position_v.w;
+  return div;
+}
+
 void main() {
     const vec2 pixelCenter = vec2(gl_LaunchIDNV.xy) + vec2(0.5);
     const vec2 uv = pixelCenter/vec2(gl_LaunchSizeNV.xy);
@@ -39,7 +48,7 @@ void main() {
     }
 
     // reconstruct world position of pixel
-    vec3 origin = worldPosFromDepth(uv, depth);
+    vec3 origin = reconstructPosition(uv, depth, pc.inverseViewProjection);
 
     // ray direction is the inverse of the light direction
     vec3 direction = normalize(-pc.light_direction.xyz);
@@ -47,9 +56,9 @@ void main() {
     // everything is considered in shadow until we miss any geometry
     payload = vec3(0);
 
-    traceNV(AS, rayFlags, 0xFF, 0, 0, 0, origin, tMin, direction, tMax, 0);
+    //traceNV(AS, rayFlags, 0xFF, 0, 0, 0, origin, tMin, direction, tMax, 0);
 
     // store either the original 0, or 1 if the miss shader executed
     // if the miss shader executes it means it was able to 'reach' the light from the current pixel's position
-    imageStore(shadowTexture, ivec2(gl_LaunchIDNV.xy), vec4(payload, 1.0));
+    imageStore(shadowTexture, ivec2(gl_LaunchIDNV.xy), vec4(origin, 1.0));
 }

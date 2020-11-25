@@ -18,16 +18,12 @@ void Object::createSphere(const float radius) {
     for (int i = 0; i <= stackCount; ++i) {
         stackAngle = PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
         xy = radius * cosf(stackAngle);             // r * cos(u)
-        z = radius * sinf(stackAngle);              // r * sin(u)
+        z = radius * sinf(stackAngle);          
 
-                                                    // add (sectorCount+1) vertices per stack
-                                                    // the first and last vertices have same position and normal, but different tex coords
         for (int j = 0; j <= sectorCount; ++j) {
             Vertex v;
 
             sectorAngle = j * sectorStep;           // starting from 0 to 2pi
-
-                                                    // vertex position (x, y, z)
             x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
             y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
             v.pos = glm::vec3(x, y, z);

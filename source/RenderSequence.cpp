@@ -4,8 +4,6 @@
 #include "Vertex.h"
 #include "Object.h"
 
-
-
 namespace scatter {
 
 static uint32_t findMemoryType(VkPhysicalDevice GPU, uint32_t typeFilter, VkMemoryPropertyFlags properties) {

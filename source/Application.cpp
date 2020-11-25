@@ -94,11 +94,21 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     TLAScreateInfo.info.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
     TLAScreateInfo.info.instanceCount = 1;
 
-    Instance instance;
-    instance.BLAS = bottomLevelAS.as;
-    instance.hitGroupIndex = 0;
-    instance.instanceID = 0;
-    instance.transform = glm::translate(glm::mat4(1.0f), glm::vec3(0, 5, 0));
+    VkAccelerationStructureInstanceNV instance;
+
+    vk_nv_ray_tracing::vkGetAccelerationStructureHandleNV(
+        device.device, 
+        bottomLevelAS.as, 
+        sizeof(uint64_t), 
+        &instance.accelerationStructureReference);
+
+    instance.mask = 0xff;
+    instance.instanceCustomIndex = 0;
+    instance.instanceShaderBindingTableRecordOffset = 0;
+    instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV;
+
+    auto transform = glm::mat4(1.0f);
+    std::memcpy(&instance.transform, glm::value_ptr(transform), sizeof(VkTransformMatrixKHR));
 
     topLevelAS.init(device.device, device.allocator, &TLAScreateInfo);
     topLevelAS.record(device, &instance, &TLAScreateInfo);
@@ -134,14 +144,12 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
 
         const auto extent = swapchain.swapChainExtent;
 
-        VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
-            .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
-        };
+        VkPhysicalDeviceRayTracingPropertiesNV rtProps{};
+        rtProps.sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
 
-        VkPhysicalDeviceProperties2 pdProps = {
-            .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-            .pNext = &rtProps
-        };
+        VkPhysicalDeviceProperties2 pdProps{};
+        pdProps.sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        pdProps.pNext = &rtProps;
 
         vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
 
@@ -334,14 +342,12 @@ void VulkanApplication::recreateSwapChain() {
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());
     device.createCommandBuffers();
 
-    VkPhysicalDeviceRayTracingPropertiesNV rtProps = {
-        .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV,
-    };
+    VkPhysicalDeviceRayTracingPropertiesNV rtProps{};
+    rtProps.sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
 
-    VkPhysicalDeviceProperties2 pdProps = {
-        .sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
-        .pNext = &rtProps
-    };
+    VkPhysicalDeviceProperties2 pdProps{};
+    pdProps.sType = VkStructureType::VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    pdProps.pNext = &rtProps;
 
     vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
 

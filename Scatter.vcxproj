@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClCompile Include="source\AccelStructure.cpp" />
     <ClCompile Include="source\Extensions.cpp" />
+    <ClCompile Include="source\NewDevice.cpp" />
     <ClCompile Include="source\Object.cpp" />
     <ClCompile Include="source\source_impl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -41,6 +42,7 @@
     <ClInclude Include="header\Device.h" />
     <ClInclude Include="header\Extensions.h" />
     <ClInclude Include="header\HelloTriangleApplication.h" />
+    <ClInclude Include="header\NewDevice.h" />
     <ClInclude Include="header\Object.h" />
     <ClInclude Include="header\pch.h" />
     <ClInclude Include="header\RenderSequence.h" />
@@ -109,7 +111,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)\header;%VULKAN_SDK%\Include;$(SolutionDir)\external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +132,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)\header;%VULKAN_SDK%\Include;$(SolutionDir)\external;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

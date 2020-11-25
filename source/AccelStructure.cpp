@@ -120,49 +120,26 @@ void TopLevelAS::init(VkDevice device, VmaAllocator allocator, VkAccelerationStr
     }
 }
 
-void TopLevelAS::record(VulkanDevice& device, Instance* instances, VkAccelerationStructureCreateInfoNV* createInfo) {
-    std::vector<VkAccelerationStructureInstanceNV> shaderInstances{};
-
-    for (const Instance& instance : std::span(instances, createInfo->info.instanceCount)) {
-        uint64_t accelStructureRef = 0;
-        if (vk_nv_ray_tracing::vkGetAccelerationStructureHandleNV(device.device, instance.BLAS, sizeof(accelStructureRef), &accelStructureRef) != VK_SUCCESS) {
-            throw std::runtime_error("failed to get acceleration structure handle");
-        }
-
-        VkAccelerationStructureInstanceNV shaderInstance{
-            .instanceCustomIndex = instance.instanceID,
-            .mask = 0xff,
-            .instanceShaderBindingTableRecordOffset = instance.hitGroupIndex,
-            .flags = VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV,
-            .accelerationStructureReference = accelStructureRef
-        };
-
-        std::memcpy(&shaderInstance.transform, glm::value_ptr(instance.transform), sizeof(shaderInstance.transform));
-
-        shaderInstances.push_back(shaderInstance);
-    }
-
+void TopLevelAS::record(VulkanDevice& device, VkAccelerationStructureInstanceNV* instances, VkAccelerationStructureCreateInfoNV* createInfo) {
     // create a host local buffer with all the instances
     VkBuffer instancesBuffer;
     VmaAllocation instancesBufferAlloc;
     VmaAllocationInfo instancesBufferAllocInfo;
 
-    auto instanceBufferCreateInfo = VkBufferCreateInfo{
-        .sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = shaderInstances.size() * sizeof(VkAccelerationStructureInstanceNV),
-        .usage = VkBufferUsageFlagBits::VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
-        .sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE
-    };
+    VkBufferCreateInfo instanceBufferCreateInfo{};
+    instanceBufferCreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    instanceBufferCreateInfo.size = createInfo->info.instanceCount * sizeof(VkAccelerationStructureInstanceNV);
+    instanceBufferCreateInfo.usage = VkBufferUsageFlagBits::VK_BUFFER_USAGE_RAY_TRACING_BIT_NV;
+    instanceBufferCreateInfo.sharingMode = VkSharingMode::VK_SHARING_MODE_EXCLUSIVE;
 
-    auto instanceBufferAllocCreateInfo = VmaAllocationCreateInfo{
-        .flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT,
-        .usage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_ONLY
-    };
+    VmaAllocationCreateInfo instanceBufferAllocCreateInfo{};
+    instanceBufferAllocCreateInfo.flags = VmaAllocationCreateFlagBits::VMA_ALLOCATION_CREATE_MAPPED_BIT;
+    instanceBufferAllocCreateInfo.usage = VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_ONLY;
 
     if (vmaCreateBuffer(device.allocator, &instanceBufferCreateInfo, &instanceBufferAllocCreateInfo, &instancesBuffer, &instancesBufferAlloc,
         &instancesBufferAllocInfo) != VK_SUCCESS) throw std::runtime_error("failed to create instanceBuffer");
 
-    std::memcpy(instancesBufferAllocInfo.pMappedData, shaderInstances.data(), instanceBufferCreateInfo.size);
+    std::memcpy(instancesBufferAllocInfo.pMappedData, instances, instanceBufferCreateInfo.size);
 
     // get the memory requirements for the scratch buffer
     VkAccelerationStructureMemoryRequirementsInfoNV scratchRequirementsInfo{};

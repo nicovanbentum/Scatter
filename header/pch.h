@@ -2,7 +2,14 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
+#ifndef NDEBUG
+#define IS_DEBUG 1
+#else
+#define IS_DEBUG 0
+#endif
+
 #define NOMINMAX
+#define _USE_MATH_DEFINES
 #include <Windows.h>
 #include <cmath>
 
@@ -19,7 +26,6 @@
 #include <cstdint>
 #include <unordered_map>
 #include <filesystem>
-#include <span>
 #include <variant>
 
 #include "vulkan/vulkan.h"

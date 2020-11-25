@@ -53,7 +53,7 @@ void VulkanShaderManager::destroy() {
 }
 
 VkShaderModule VulkanShaderManager::getShader(const std::filesystem::path& path) {
-    if (auto strPath = path.string(); shaders.contains(strPath)) {
+    if (auto strPath = path.string(); shaders.find(strPath) != shaders.end()) {
         return shaders[strPath];
     } else {
         // JIT shader loading
