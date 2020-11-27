@@ -7,8 +7,6 @@
 #include "Texture.h"
 #include "Util.h"
 
-#include <string.h>
-
 namespace scatter {
 
 class VulkanRenderSequence {

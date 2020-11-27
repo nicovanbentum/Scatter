@@ -1,7 +1,6 @@
 #pragma once
 
-#include "pch.h"
-#include "Shader.h"
+#include <filesystem>
 
 namespace scatter {
 

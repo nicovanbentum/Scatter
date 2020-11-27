@@ -42,6 +42,23 @@ VkExtent2D VulkanSwapchain::chooseSwapExtent(GLFWwindow* window, const VkSurface
 }
 
 void VulkanSwapchain::init(GLFWwindow* window, VulkanDevice& device) {
+    if (glfwCreateWindowSurface(device.instance, window, nullptr, &surface) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create window surface! \n");
+    } else {
+        std::cout << "window surface created! \n";
+    }
+
+   auto queueFamilies =  device.findQueueFamilies(device.physicalDevice);
+
+   VkBool32 surfaceSupported = false;
+   vkGetPhysicalDeviceSurfaceSupportKHR(device.physicalDevice, queueFamilies.graphicsFamily.value(), surface, &surfaceSupported);
+
+   if (!surfaceSupported) {
+       throw std::runtime_error("surfaces and swapchains are not supported!");
+   }
+
+    vkGetDeviceQueue(device.device, queueFamilies.graphicsFamily.value(), 0, &presentQueue);
+
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
     VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentMode);
@@ -55,7 +72,7 @@ void VulkanSwapchain::init(GLFWwindow* window, VulkanDevice& device) {
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = device.surface;
+    createInfo.surface = surface;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -64,17 +81,12 @@ void VulkanSwapchain::init(GLFWwindow* window, VulkanDevice& device) {
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     QueueFamilyIndices indices = device.findQueueFamilies(device.physicalDevice);
-    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+    uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value() };
 
-    if (indices.graphicsFamily != indices.presentFamily) {
-        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        createInfo.queueFamilyIndexCount = 2;
-        createInfo.pQueueFamilyIndices = queueFamilyIndices;
-    } else {
-        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        createInfo.queueFamilyIndexCount = 0;
-        createInfo.pQueueFamilyIndices = nullptr;
-    }
+
+    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    createInfo.queueFamilyIndexCount = 0;
+    createInfo.pQueueFamilyIndices = nullptr;
 
     createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -120,32 +132,34 @@ void VulkanSwapchain::init(GLFWwindow* window, VulkanDevice& device) {
     }
 }
 
-void VulkanSwapchain::destroy(VkDevice device) {
+void VulkanSwapchain::destroy(VkInstance instance, VkDevice device) {
     vkDestroySwapchainKHR(device, swapChain, nullptr);
 
     for (auto view : swapChainImageViews) {
         vkDestroyImageView(device, view, nullptr);
     }
+
+    vkDestroySurfaceKHR(instance, surface, nullptr);
 }
 
 SwapChainSupportDetails VulkanSwapchain::querySwapChainSupport(VulkanDevice& device) {
     SwapChainSupportDetails details;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.physicalDevice, device.surface, &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.physicalDevice, surface, &details.capabilities);
 
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, device.surface, &formatCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, surface, &formatCount, nullptr);
 
     if (formatCount != 0) {
         details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, device.surface, &formatCount, details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device.physicalDevice, surface, &formatCount, details.formats.data());
     }
 
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, device.surface, &presentModeCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, surface, &presentModeCount, nullptr);
 
     if (presentModeCount != 0) {
         details.presentMode.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, device.surface, &presentModeCount, details.presentMode.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device.physicalDevice, surface, &presentModeCount, details.presentMode.data());
     }
 
     return details;

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pch.h"
-
 #include "Device.h"
 #include "Object.h"
 #include "Swapchain.h"

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pch.h"
-
 namespace scatter {
 
 inline static void ImageMemoryBarrier(const VkCommandBuffer commandBuffer, const VkImage image, const VkImageAspectFlags aspectFlags, const VkAccessFlags srcAccessMask, 

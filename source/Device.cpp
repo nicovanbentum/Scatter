@@ -108,10 +108,9 @@ std::tuple<VkBuffer, VmaAllocation, VmaAllocationInfo> VulkanDevice::createStagi
     return { stagingBuffer, stagingAlloc, stagingAllocInfo };
 }
 
-void VulkanDevice::init(GLFWwindow* window) {
+void VulkanDevice::init() {
     // standard setup
     createInstance();
-    createSurface(window);
     setupDebugMessenger();
     pickPhysicalDevice();
     createLogicalDevice();
@@ -147,8 +146,6 @@ VulkanDevice::~VulkanDevice() {
 
     vmaDestroyAllocator(allocator);
 
-    vkDestroySurfaceKHR(instance, surface, nullptr);
-
     vkDestroyDevice(device, nullptr);
 
     vkDestroyInstance(instance, nullptr);
@@ -178,11 +175,6 @@ QueueFamilyIndices VulkanDevice::findQueueFamilies(VkPhysicalDevice device) {
     for (const auto& queueFamily : queueFamilies) {
         if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
             indices.graphicsFamily = i;
-        }
-        VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-        if (presentSupport) {
-            indices.presentFamily = i;
         }
         if (indices.isComplete()) {
             break;
@@ -256,7 +248,6 @@ void VulkanDevice::createInstance() {
     createInfo.pApplicationInfo = &appInfo;
 
     auto extensions = getRequiredExtensions();
-    extensions.insert(extensions.end(), vk_nv_ray_tracing::instanceStrings.begin(), vk_nv_ray_tracing::instanceStrings.end());
     
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
@@ -295,14 +286,6 @@ void VulkanDevice::createInstance() {
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensionsSupported.data());
 }
 
-void VulkanDevice::createSurface(GLFWwindow* window) {
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create window surface! \n");
-    } else {
-        std::cout << "window surface created! \n";
-    }
-}
-
 void VulkanDevice::pickPhysicalDevice() {
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -312,29 +295,13 @@ void VulkanDevice::pickPhysicalDevice() {
         std::cout << "Found GPU with Vulkan support! " << deviceCount << '\n';
     }
 
-    deviceExtensions.insert(deviceExtensions.end(), vk_nv_ray_tracing::deviceStrings.begin(), vk_nv_ray_tracing::deviceStrings.end());
-
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
-    VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
 
     for (const auto& device : devices) {
         if (isDeviceSuitable(device)) {
             physicalDevice = device;
-            
-            auto rayTracing = []() {};
-            auto noRayTracing = []() {};
-
-            const uint32_t AMD = 0x1002;
-            const uint32_t NVIDIA = 0x10DE;
-
-            vkGetPhysicalDeviceProperties(device, &deviceProperties);
-            if (deviceProperties.vendorID == AMD) {
-                rayTracing();
-            } else {
-                noRayTracing();
-            }
 
             vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
             break;
@@ -351,8 +318,7 @@ void VulkanDevice::createLogicalDevice() {
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(),
-                                                indices.presentFamily.value() };
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value() };
 
     VkDeviceQueueCreateInfo queueCreateInfo{};
     queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -394,11 +360,9 @@ void VulkanDevice::createLogicalDevice() {
     }
 
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-    vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
 bool VulkanDevice::isDeviceSuitable(VkPhysicalDevice device) {
-    QueueFamilyIndices indices = findQueueFamilies(device);
     bool extensionSupported = checkDeviceExtensionSupport(device);
 
     bool swapChainAdequate = true;
@@ -408,7 +372,7 @@ bool VulkanDevice::isDeviceSuitable(VkPhysicalDevice device) {
     //	swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentMode.empty();
     //}
 
-    return indices.isComplete() && extensionSupported && swapChainAdequate;
+    return extensionSupported && swapChainAdequate;
 }
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
@@ -442,6 +406,9 @@ std::vector<const char*> VulkanDevice::getRequiredExtensions() {
 
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
+    extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
     if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
@@ -449,7 +416,7 @@ std::vector<const char*> VulkanDevice::getRequiredExtensions() {
 }
 
 bool QueueFamilyIndices::isComplete() {
-    return graphicsFamily.has_value() && presentFamily.has_value();
+    return graphicsFamily.has_value();
 }
 
 } // scatter

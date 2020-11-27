@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAME_IN_FLIGHT = 2;

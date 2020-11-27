@@ -1,10 +1,10 @@
 #pragma once
 
-#include "pch.h"
-
 #ifndef VK_LOAD_FN
 #define VK_LOAD_FN(device, x) PFN_##x(vkGetDeviceProcAddr(device, #x))
 #endif
+
+#include "vulkan/vulkan.h"
 
 namespace scatter {
 
@@ -21,14 +21,6 @@ public:
     inline static PFN_vkGetAccelerationStructureMemoryRequirementsNV vkGetAccelerationStructureMemoryRequirementsNV;
 
     static void init(VkDevice device);
-
-    static constexpr std::array<const char*, 2> deviceStrings = {
-        VK_NV_RAY_TRACING_EXTENSION_NAME, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME
-    };
-
-    static constexpr std::array<const char*, 1> instanceStrings = {
-        VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME
-    };
 };
 
 }

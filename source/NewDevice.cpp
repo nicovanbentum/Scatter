@@ -21,10 +21,6 @@ Instance::Instance() {
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    // add RTX extensions
-    extensions.insert(extensions.end(), vk_nv_ray_tracing::instanceStrings.begin(),
-        vk_nv_ray_tracing::instanceStrings.end());
-
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
 
@@ -164,8 +160,7 @@ Device::Device(const std::shared_ptr<Instance>& instance, const std::shared_ptr<
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-    std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-    deviceExtensions.insert(deviceExtensions.end(), vk_nv_ray_tracing::deviceStrings.begin(), vk_nv_ray_tracing::deviceStrings.end());
+    std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_NV_RAY_TRACING_EXTENSION_NAME, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME };
 
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();

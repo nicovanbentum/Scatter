@@ -17,7 +17,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
         app->frameBufferResized = true;
     });
     
-    device.init(window);
+    device.init();
     swapchain.init(window, device);
     shaderManager.init(device.device);
 
@@ -180,7 +180,7 @@ void VulkanApplication::destroy() {
 
     shadowSequence.destroy(device.device, device.allocator, device.descriptorPool);
 
-    swapchain.destroy(device.device);
+    swapchain.destroy(device.instance, device.device);
 
     renderSequence.destroy(device.device, device.allocator);
 
@@ -300,7 +300,7 @@ void VulkanApplication::drawFrame() {
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr;
 
-    result = vkQueuePresentKHR(device.presentQueue, &presentInfo);
+    result = vkQueuePresentKHR(swapchain.presentQueue, &presentInfo);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || frameBufferResized) {
         frameBufferResized = false;
@@ -324,7 +324,7 @@ void VulkanApplication::recreateSwapChain() {
 
     vkDeviceWaitIdle(device.device);
 
-    swapchain.destroy(device.device);
+    swapchain.destroy(device.instance, device.device);
     renderSequence.destroyFramebuffers(device.device);
     shadowSequence.destroyImages(device.device);
 

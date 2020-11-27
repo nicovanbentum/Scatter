@@ -32,7 +32,6 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="source\RenderSequence.cpp" />
-    <ClCompile Include="source\Shader.cpp" />
     <ClCompile Include="source\ShaderManager.cpp" />
     <ClCompile Include="source\Swapchain.cpp" />
     <ClCompile Include="source\Texture.cpp" />
@@ -47,7 +46,6 @@
     <ClInclude Include="header\pch.h" />
     <ClInclude Include="header\RenderSequence.h" />
     <ClInclude Include="header\Scatter.h" />
-    <ClInclude Include="header\Shader.h" />
     <ClInclude Include="header\ShaderManager.h" />
     <ClInclude Include="header\Swapchain.h" />
     <ClInclude Include="header\Texture.h" />
@@ -72,13 +70,13 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
