@@ -133,9 +133,9 @@ public:
         geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
         triangle.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
         triangle.vertexData = vertexBuffer.getBuffer();
-        triangle.vertexOffset = 0;
+        triangle.vertexOffset = attribDesc.vertexOffset;
         triangle.vertexCount = mesh.vertexCount;
-        triangle.vertexStride = sizeof(Vertex);
+        triangle.vertexStride = attribDesc.vertexStride;
         triangle.vertexFormat = static_cast<VkFormat>(attribDesc.vertexFormat);
         triangle.indexData = indexBuffer.getBuffer();
         triangle.indexOffset = 0;
