@@ -407,7 +407,9 @@ HANDLE RayTracedShadowsSequence::getMemoryHandle(VkDevice device, VkDeviceMemory
     handleInfo.memory = memory;
 
     HANDLE handle;
-    vkGetMemoryWin32HandleKHR(device, &handleInfo, &handle);
+    if (vkGetMemoryWin32HandleKHR(device, &handleInfo, &handle) != VK_SUCCESS) {
+        throw std::runtime_error("failed to get memory win32 handle");
+    }
     return handle;
 }
 
@@ -435,7 +437,7 @@ void RayTracedShadowsSequence::destroyImages(VkDevice device) {
     shadowsTexture.destroy(device);
 }
 
-void RayTracedShadowsSequence::createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, VkAccelerationStructureNV tlas) {
+void RayTracedShadowsSequence::createDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool) {
     // allocate the descriptor set
     VkDescriptorSetAllocateInfo descriptorAllocInfo{};
     descriptorAllocInfo.descriptorSetCount = 1;
@@ -448,23 +450,6 @@ void RayTracedShadowsSequence::createDescriptorSets(VkDevice device, VmaAllocato
     } else {
         std::puts("Succesfully allocated descriptorSets!!");
     }
-
-    // AS write set
-    VkWriteDescriptorSetAccelerationStructureNV write = {};
-    write.accelerationStructureCount = 1;
-    write.pAccelerationStructures = &tlas;
-    write.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
-
-    VkWriteDescriptorSet writeAS = {};
-    writeAS.dstBinding = 0;
-    writeAS.descriptorCount = 1;
-    writeAS.pNext = &write;
-    writeAS.dstSet = descriptorSet;
-    writeAS.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeAS.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
-
-    updateImages(device);
-    vkUpdateDescriptorSets(device, 1u, &writeAS, 0, nullptr);
 }
 
 void RayTracedShadowsSequence::updateImages(VkDevice device) {
@@ -674,7 +659,10 @@ void RayTracedShadowsSequence::destroy(VkDevice device, VmaAllocator allocator, 
     vkDestroyPipeline(device, pipeline, nullptr);
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-    vkFreeDescriptorSets(device, descriptorPool, 1, &descriptorSet);
+    
+    if (descriptorSet != VK_NULL_HANDLE) {
+        vkFreeDescriptorSets(device, descriptorPool, 1, &descriptorSet);
+    }
 
     depthTexture.destroy(device);
     shadowsTexture.destroy(device);

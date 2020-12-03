@@ -64,6 +64,14 @@ public:
 
     HANDLE getMemoryHandle(VkDevice device, VkDeviceMemory memory);
 
+    HANDLE getDepthTextureMemoryHandle(VkDevice device) {
+        return getMemoryHandle(device, depthTexture.memory);
+    }
+
+    HANDLE getShadowTextureMemoryHandle(VkDevice device) {
+        return getMemoryHandle(device, shadowsTexture.memory);
+    }
+
     void init(VkDevice device, VmaAllocator allocator, VkPhysicalDevice pdevice, VulkanShaderManager& shaderManager, VkExtent2D extent);
     void destroy(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
 
@@ -71,7 +79,25 @@ public:
     void updateImages(VkDevice device);
     void destroyImages(VkDevice device);
 
-    void createDescriptorSets(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool, VkAccelerationStructureNV tlas);
+    void updateTLAS(VkDevice device, VkAccelerationStructureNV tlas) {
+        // AS write set
+        VkWriteDescriptorSetAccelerationStructureNV write = {};
+        write.accelerationStructureCount = 1;
+        write.pAccelerationStructures = &tlas;
+        write.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+
+        VkWriteDescriptorSet writeAS = {};
+        writeAS.dstBinding = 0;
+        writeAS.descriptorCount = 1;
+        writeAS.pNext = &write;
+        writeAS.dstSet = descriptorSet;
+        writeAS.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writeAS.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+
+        vkUpdateDescriptorSets(device, 1u, &writeAS, 0, nullptr);
+    }
+
+    void createDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool);
     void createPipeline(VkDevice device, VulkanShaderManager& shaderManager);
     void createSbtTable(VkDevice device, VmaAllocator allocator, const VkPhysicalDeviceRayTracingPropertiesNV& rtProps);
 
@@ -86,7 +112,7 @@ private:
     VkPipelineLayout pipelineLayout;
 
     // descriptor set stuff
-    VkDescriptorSet descriptorSet;
+    VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
     VkDescriptorSetLayout descriptorSetLayout;
     VkWriteDescriptorSet writeDescriptorSet;
     VkDescriptorBufferInfo descriptorBufferInfo;

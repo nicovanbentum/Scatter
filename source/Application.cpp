@@ -125,7 +125,10 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     // setup descriptor sets
     renderSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool);
     renderSequence.updateDescriptorSet(device.device, device.allocator);
-    shadowSequence.createDescriptorSets(device.device, device.allocator, device.descriptorPool, topLevelAS.as);
+    
+    shadowSequence.createDescriptorSets(device.device, device.descriptorPool);
+    shadowSequence.updateTLAS(device.device, topLevelAS.as);
+    shadowSequence.updateImages(device.device);
 
     // allocate command buffers
     device.commandBuffers.resize(renderSequence.getFramebuffersCount());

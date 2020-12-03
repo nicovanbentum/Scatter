@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #ifndef NDEBUG
 #define IS_DEBUG 1
@@ -31,14 +33,20 @@
 #include "vulkan/vulkan.h"
 #include "vulkan/vulkan_win32.h"
 
-#include "GLFW/glfw3.h"
-#include "glm/glm.hpp"
-
+#ifndef GLFW_INCLUDE_VULKAN
 #define GLFW_INCLUDE_VULKAN
+#endif
+
 #include <GLFW/glfw3.h>
 
+#ifndef GLM_FORCE_RADIANS
 #define GLM_FORCE_RADIANS
+#endif
+
+#ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#endif 
+
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <glm/gtx/string_cast.hpp>

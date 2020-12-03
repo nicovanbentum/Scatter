@@ -61,8 +61,6 @@ TextureEXT::TextureEXT(VkDevice device, TextureCreateInfo* info, VkPhysicalDevic
     }
 }
 
-
-
 VkImageView TextureEXT::createView(VkDevice device, TextureCreateInfo* info, VkImageAspectFlags aspectFlags) {
     VkImageViewCreateInfo viewCreateInfo = {};
     viewCreateInfo.image = image;
@@ -117,10 +115,10 @@ HANDLE TextureEXT::getMemoryHandle(VkDevice device, VkDeviceMemory memory) {
 }
 
 void TextureEXT::destroy(VkDevice device) {
-    vkDestroyImageView(device, view, nullptr);
-    vkDestroyImage(device, image, nullptr);
-    vkFreeMemory(device, memory, nullptr);
-    if (sampler) vkDestroySampler(device, sampler, nullptr);
+    if(view) vkDestroyImageView(device, view, nullptr);
+    if(image) vkDestroyImage(device, image, nullptr);
+    if(memory) vkFreeMemory(device, memory, nullptr);
+    if(sampler) vkDestroySampler(device, sampler, nullptr);
 }
 
 } // scatter
