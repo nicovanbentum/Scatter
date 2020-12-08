@@ -5,15 +5,6 @@
 
 namespace scatter {
 
-struct Mesh {
-    Mesh(void* vertices, void* indices, unsigned int vertexCount, unsigned int indexCount) :
-    vertices(vertices), indices(indices), vertexCount(vertexCount), indexCount(indexCount) {}
-    void* vertices; 
-    void* indices; 
-    unsigned int vertexCount; 
-    unsigned int indexCount;
-};
-
 enum class VertexFormat : unsigned int {
     R32_SFLOAT = 100,
     R32G32_SFLOAT = 103,
@@ -83,7 +74,6 @@ private:
 
     // geometry stuff
     BufferDescription attribDesc;
-    std::vector<Mesh> meshes;
     std::vector<BottomLevelAS> bottomLevels;
     TopLevelAS TLAS;
     std::vector< VkAccelerationStructureInstanceNV> instances;

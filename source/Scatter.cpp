@@ -145,40 +145,44 @@ void Scatter::destroyTextures() {
 }
 
 uint64_t Scatter::addMesh(void* vertices, void* indices, unsigned int vertexCount, unsigned int indexCount) {
-    auto& mesh = meshes.emplace_back(vertices, indices, vertexCount, indexCount);
-
     VulkanBuffer vertexBuffer;
-    VulkanBuffer indexBuffer;
     vertexBuffer.init(device, vertices, attribDesc.vertexStride * vertexCount, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
     uint32_t indexSize = 0;
+
     switch (attribDesc.indexFormat) {
-        case IndexFormat::UINT32: indexSize = sizeof(uint32_t); break;
-        case IndexFormat::UINT16: indexSize = sizeof(uint16_t); break;
+        case IndexFormat::UINT16: {
+            indexSize = sizeof(uint16_t);
+        } break;
+        case IndexFormat::UINT32: {
+            indexSize = sizeof(uint32_t);
+        } break;
     }
 
+    VulkanBuffer indexBuffer;
     indexBuffer.init(device, indices, indexSize * indexCount, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
     VkGeometryNV geometry{};
-    VkGeometryTrianglesNV& triangle = geometry.geometry.triangles;
-
     geometry.sType = VK_STRUCTURE_TYPE_GEOMETRY_NV;
     geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_NV;
-    triangle.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
-    triangle.vertexData = vertexBuffer.getBuffer();
-    triangle.vertexOffset = attribDesc.vertexOffset;
-    triangle.vertexCount = mesh.vertexCount;
-    triangle.vertexStride = attribDesc.vertexStride;
-    triangle.vertexFormat = static_cast<VkFormat>(attribDesc.vertexFormat);
-    triangle.indexData = indexBuffer.getBuffer();
-    triangle.indexOffset = 0;
-    triangle.indexCount = mesh.indexCount;
-    triangle.indexType = static_cast<VkIndexType>(attribDesc.indexFormat);
-    triangle.transformData = VK_NULL_HANDLE;
-    triangle.transformOffset = 0;
+    geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+    
     geometry.geometry.aabbs = {};
     geometry.geometry.aabbs.sType = { VK_STRUCTURE_TYPE_GEOMETRY_AABB_NV };
-    geometry.flags = VK_GEOMETRY_OPAQUE_BIT_NV;
+    
+    geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_GEOMETRY_TRIANGLES_NV;
+    geometry.geometry.triangles.vertexData = vertexBuffer.getBuffer();
+    geometry.geometry.triangles.vertexOffset = attribDesc.vertexOffset;
+    geometry.geometry.triangles.vertexCount = vertexCount;
+    geometry.geometry.triangles.vertexStride = attribDesc.vertexStride;
+    geometry.geometry.triangles.vertexFormat = static_cast<VkFormat>(attribDesc.vertexFormat);
+    geometry.geometry.triangles.indexData = indexBuffer.getBuffer();
+    geometry.geometry.triangles.indexOffset = 0;
+    geometry.geometry.triangles.indexCount = indexCount;
+    geometry.geometry.triangles.indexType = static_cast<VkIndexType>(attribDesc.indexFormat);
+    geometry.geometry.triangles.transformData = VK_NULL_HANDLE;
+    geometry.geometry.triangles.transformOffset = 0;
+    
 
     // create bottom level acceleration structure 
     VkAccelerationStructureCreateInfoNV BLAScreateInfo{};
@@ -189,13 +193,16 @@ uint64_t Scatter::addMesh(void* vertices, void* indices, unsigned int vertexCoun
     BLAScreateInfo.info.geometryCount = 1;
     BLAScreateInfo.info.pGeometries = &geometry;
 
-    bottomLevels.emplace_back().init(device.device, device.allocator, &BLAScreateInfo);
-    bottomLevels.back().record(device, &BLAScreateInfo);
+    BottomLevelAS BLAS;
+    BLAS.init(device.device, device.allocator, &BLAScreateInfo);
+    BLAS.record(device, &BLAScreateInfo);
+
+    bottomLevels.push_back(BLAS);
 
     vertexBuffer.destroy(device);
     indexBuffer.destroy(device);
 
-    return bottomLevels.back().handle;
+    return BLAS.handle;
 }
 
 void Scatter::addInstance(uint64_t handle, float* transform) {
@@ -203,14 +210,14 @@ void Scatter::addInstance(uint64_t handle, float* transform) {
 
     VkAccelerationStructureInstanceNV instance;
     instance.instanceCustomIndex = 0;
-    instance.flags = 0xff;
+    instance.mask = 0xff;
     instance.instanceShaderBindingTableRecordOffset = 0;
     instance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_CULL_DISABLE_BIT_NV;
     instance.accelerationStructureReference = handle;
 
-    std::memcpy(&instance.transform, transform, sizeof(instance.transform));
+    std::memcpy(&instance.transform, transform, sizeof(VkTransformMatrixKHR));
 
-    instances.push_back(std::move(instance));
+    instances.push_back(instance);
 }
 
 void Scatter::build() {
