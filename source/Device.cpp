@@ -61,6 +61,22 @@ void VulkanDevice::endSingleTimeCommands(VkCommandBuffer buffer) {
     vkFreeCommandBuffers(device, commandPool, 1, &buffer);
 }
 
+VkCommandBuffer VulkanDevice::createCommandBuffer() {
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+
+    if (vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate command buffers! \n");
+    }
+
+    return commandBuffer;
+}
+
 void VulkanDevice::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
 

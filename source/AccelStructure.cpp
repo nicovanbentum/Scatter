@@ -177,8 +177,8 @@ void TopLevelAS::record(VulkanDevice& device, VkAccelerationStructureInstanceNV*
 }
 
 void TopLevelAS::destroy(VkDevice device, VmaAllocator allocator) {
-    if(as) vk_nv_ray_tracing::vkDestroyAccelerationStructureNV(device, as, nullptr);
-    if(alloc) vmaFreeMemory(allocator, alloc);
+    vk_nv_ray_tracing::vkDestroyAccelerationStructureNV(device, as, nullptr);
+    vmaFreeMemory(allocator, alloc);
 }
 
 } // scatter

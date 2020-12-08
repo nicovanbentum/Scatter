@@ -398,6 +398,8 @@ void VulkanRenderSequence::execute(VkDevice device, VkCommandBuffer commandBuffe
     vkCmdEndRenderPass(commandBuffer);
 }
 
+size_t VulkanRenderSequence::getFramebuffersCount() { return framebuffers.size(); }
+
 HANDLE RayTracedShadowsSequence::getMemoryHandle(VkDevice device, VkDeviceMemory memory) {
     auto vkGetMemoryWin32HandleKHR = PFN_vkGetMemoryWin32HandleKHR(vkGetDeviceProcAddr(device, "vkGetMemoryWin32HandleKHR"));
 
@@ -411,6 +413,14 @@ HANDLE RayTracedShadowsSequence::getMemoryHandle(VkDevice device, VkDeviceMemory
         throw std::runtime_error("failed to get memory win32 handle");
     }
     return handle;
+}
+
+HANDLE RayTracedShadowsSequence::getDepthTextureMemoryHandle(VkDevice device) {
+    return getMemoryHandle(device, depthTexture.memory);
+}
+
+HANDLE RayTracedShadowsSequence::getShadowTextureMemoryHandle(VkDevice device) {
+    return getMemoryHandle(device, shadowsTexture.memory);
 }
 
 void RayTracedShadowsSequence::createImages(VkDevice device, VkExtent2D extent, VkPhysicalDeviceMemoryProperties* memProperties) {
@@ -435,6 +445,24 @@ void RayTracedShadowsSequence::createImages(VkDevice device, VkExtent2D extent, 
 void RayTracedShadowsSequence::destroyImages(VkDevice device) {
     depthTexture.destroy(device);
     shadowsTexture.destroy(device);
+}
+
+void RayTracedShadowsSequence::updateTLAS(VkDevice device, VkAccelerationStructureNV tlas) {
+    // AS write set
+    VkWriteDescriptorSetAccelerationStructureNV write = {};
+    write.accelerationStructureCount = 1;
+    write.pAccelerationStructures = &tlas;
+    write.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+
+    VkWriteDescriptorSet writeAS = {};
+    writeAS.dstBinding = 0;
+    writeAS.descriptorCount = 1;
+    writeAS.pNext = &write;
+    writeAS.dstSet = descriptorSet;
+    writeAS.sType = VkStructureType::VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeAS.descriptorType = VkDescriptorType::VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_NV;
+
+    vkUpdateDescriptorSets(device, 1u, &writeAS, 0, nullptr);
 }
 
 void RayTracedShadowsSequence::createDescriptorSets(VkDevice device, VkDescriptorPool descriptorPool) {
@@ -660,9 +688,7 @@ void RayTracedShadowsSequence::destroy(VkDevice device, VmaAllocator allocator, 
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     
-    if (descriptorSet != VK_NULL_HANDLE) {
-        vkFreeDescriptorSets(device, descriptorPool, 1, &descriptorSet);
-    }
+    vkFreeDescriptorSets(device, descriptorPool, 1, &descriptorSet);
 
     depthTexture.destroy(device);
     shadowsTexture.destroy(device);

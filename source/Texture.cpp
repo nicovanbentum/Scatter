@@ -38,6 +38,8 @@ TextureEXT::TextureEXT(VkDevice device, TextureCreateInfo* info, VkPhysicalDevic
         throw std::runtime_error("failed to create depth image");
     }
 
+    std::puts("CREATING VULKAN IMAGE");
+
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(device, image, &memRequirements);
 
@@ -115,10 +117,10 @@ HANDLE TextureEXT::getMemoryHandle(VkDevice device, VkDeviceMemory memory) {
 }
 
 void TextureEXT::destroy(VkDevice device) {
-    if(view) vkDestroyImageView(device, view, nullptr);
-    if(image) vkDestroyImage(device, image, nullptr);
-    if(memory) vkFreeMemory(device, memory, nullptr);
-    if(sampler) vkDestroySampler(device, sampler, nullptr);
+    vkDestroyImageView(device, view, nullptr);
+    vkDestroyImage(device, image, nullptr);
+    vkFreeMemory(device, memory, nullptr);
+    vkDestroySampler(device, sampler, nullptr);
 }
 
 } // scatter
