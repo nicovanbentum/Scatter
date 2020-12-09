@@ -120,6 +120,11 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     
     // init both render sequences
     shadowSequence.init(device.device, device.allocator, device.physicalDevice, shaderManager, extent);
+    VkPhysicalDeviceMemoryProperties memoryProperties;
+    vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
+    shadowSequence.createImages(device.device, extent, &memoryProperties);
+
+    
     renderSequence.init(device.device, device.allocator, device.descriptorPool, swapchain, shaderManager, shadowSequence.depthTexture.view);
 
     // setup descriptor sets
@@ -186,6 +191,8 @@ void VulkanApplication::destroy() {
     swapchain.destroy(device.instance, device.device);
 
     renderSequence.destroy(device.device, device.allocator);
+
+    device.destroy();
 
     glfwDestroyWindow(window);
     glfwTerminate();

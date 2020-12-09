@@ -36,6 +36,16 @@ void Scatter::init(uint32_t width, uint32_t height) {
     vkCreateFence(device.device, &fenceInfo, nullptr, &cpuFence);
 }
 
+// vertex input API
+
+void Scatter::setVertexStride(uint32_t stride) { attribDesc.vertexStride = stride; }
+
+void Scatter::setVertexOffset(uint32_t offset) { attribDesc.vertexOffset = offset; }
+
+void Scatter::setVertexFormat(VertexFormat format) { attribDesc.vertexFormat = format; }
+
+void Scatter::setIndexFormat(IndexFormat format) { attribDesc.indexFormat = format; }
+
 HANDLE Scatter::getShadowTextureMemoryHandle() {
     return rtx.getShadowTextureMemoryHandle(device.device);
 }
@@ -244,21 +254,23 @@ HANDLE Scatter::getDepthTextureMemoryhandle() {
     return rtx.getDepthTextureMemoryHandle(device.device);
 }
 
-Scatter::~Scatter() {
-    vkDeviceWaitIdle(device.device);
+void Scatter::destroy() {
 
-    rtx.destroy(device.device, device.allocator, device.descriptorPool);
     shaderManager.destroy();
     for (auto& blas : bottomLevels) {
         blas.destroy(device.device, device.allocator);
     }
 
     TLAS.destroy(device.device, device.allocator);
+    
+    rtx.destroy(device.device, device.allocator, device.descriptorPool);
 
     vkDestroyFence(device.device, cpuFence, nullptr);
 
     vkDestroySemaphore(device.device, readySemaphore, nullptr);
     vkDestroySemaphore(device.device, doneSemaphore, nullptr);
+
+    device.destroy();
 }
 
 }

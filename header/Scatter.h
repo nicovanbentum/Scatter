@@ -30,10 +30,10 @@ public:
     void init(uint32_t width, uint32_t height);
 
     // vertex input API
-    void setVertexStride(uint32_t stride) { attribDesc.vertexStride = stride; }
-    void setVertexOffset(uint32_t offset) { attribDesc.vertexOffset = offset; }
-    void setVertexFormat(VertexFormat format) { attribDesc.vertexFormat = format; };
-    void setIndexFormat(IndexFormat format) { attribDesc.indexFormat = format; }
+    void setVertexStride(uint32_t stride);
+    void setVertexOffset(uint32_t offset);
+    void setVertexFormat(VertexFormat format);
+    void setIndexFormat(IndexFormat format);
 
     // shader constants API
     void setLightDirection(float x, float y, float z);
@@ -63,7 +63,7 @@ public:
 
     void clear();
 
-    ~Scatter();
+    void destroy();
 
 private:
     VkFence cpuFence;

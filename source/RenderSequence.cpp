@@ -626,9 +626,6 @@ void RayTracedShadowsSequence::createSbtTable(VkDevice device, VmaAllocator allo
     const uint32_t groupCount = static_cast<uint32_t>(groups.size());
     const uint32_t sbtSize = groupCount * rtProps.shaderGroupBaseAlignment;
 
-    std::cout << "base alignment " << rtProps.shaderGroupBaseAlignment << std::endl;
-    std::cout << "group handle size " << rtProps.shaderGroupHandleSize << std::endl;
-
     VkBufferCreateInfo sbtBufferCreateInfo = {};
     sbtBufferCreateInfo.size = sbtSize;
     sbtBufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -679,7 +676,6 @@ void RayTracedShadowsSequence::init(VkDevice device, VmaAllocator allocator, VkP
 
     vkGetPhysicalDeviceProperties2(pdevice, &pdeviceProperties2);
 
-    createImages(device, extent, &memoryProperties);
     createSbtTable(device, allocator, rtProperties);
 }
 

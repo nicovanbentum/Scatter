@@ -151,7 +151,7 @@ void VulkanDevice::init() {
     vk_nv_ray_tracing::init(device);
 }
 
-VulkanDevice::~VulkanDevice() {
+void VulkanDevice::destroy() {
     if (enableValidationLayers) {
         DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
@@ -165,8 +165,6 @@ VulkanDevice::~VulkanDevice() {
     vkDestroyDevice(device, nullptr);
 
     vkDestroyInstance(instance, nullptr);
-
-
 }
 
 void VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {

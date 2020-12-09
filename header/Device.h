@@ -32,7 +32,7 @@ class VulkanDevice {
     friend class Scatter;
 public:
     void init();
-    ~VulkanDevice();
+    void destroy();
 
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer buffer);

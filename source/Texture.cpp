@@ -38,8 +38,6 @@ TextureEXT::TextureEXT(VkDevice device, TextureCreateInfo* info, VkPhysicalDevic
         throw std::runtime_error("failed to create depth image");
     }
 
-    std::puts("CREATING VULKAN IMAGE");
-
     VkMemoryRequirements memRequirements;
     vkGetImageMemoryRequirements(device, image, &memRequirements);
 
