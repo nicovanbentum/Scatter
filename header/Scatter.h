@@ -58,10 +58,10 @@ public:
 
     // as builder API
     uint64_t addMesh(void* vertices, void* indices, unsigned int vertexCount, unsigned int indexCount);
+    void destroyMesh(uint64_t handle);
     void addInstance(uint64_t handle, float* transform);
+    void clearInstances();
     void build();
-
-    void clear();
 
     void destroy();
 

@@ -20,7 +20,7 @@ struct BottomLevelAS {
 struct TopLevelAS {
     VmaAllocation alloc;
     VmaAllocationInfo allocInfo;
-    VkAccelerationStructureNV as;
+    VkAccelerationStructureNV as = nullptr;
 
     void init(VkDevice device, VmaAllocator allocator, VkAccelerationStructureCreateInfoNV* createInfo);
     void record(VulkanDevice& device, VkAccelerationStructureInstanceNV* instances, VkAccelerationStructureCreateInfoNV* createInfo);

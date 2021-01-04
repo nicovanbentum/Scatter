@@ -231,6 +231,10 @@ void Scatter::addInstance(uint64_t handle, float* transform) {
 }
 
 void Scatter::build() {
+    if (TLAS.as != nullptr) {
+        TLAS.destroy(device.device, device.allocator);
+    }
+
     // create top level acceleration structure
     VkAccelerationStructureCreateInfoNV TLAScreateInfo{};
     TLAScreateInfo.sType = VkStructureType::VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
@@ -243,11 +247,19 @@ void Scatter::build() {
     rtx.updateTLAS(device.device, TLAS.as);
 }
 
-void Scatter::clear() {
-    TLAS.destroy(device.device, device.allocator);
-    for (auto& blas : bottomLevels) {
-        blas.destroy(device.device, device.allocator);
+void Scatter::destroyMesh(uint64_t handle) {
+    auto it = std::find_if(bottomLevels.begin(), bottomLevels.end(), [&](auto& blas) -> bool {
+        return blas.handle == handle;
+    });
+
+    if (it != bottomLevels.end()) {
+        it->destroy(device.device, device.allocator);
+        bottomLevels.erase(it);
     }
+}
+
+void Scatter::clearInstances() {
+    instances.clear();
 }
 
 HANDLE Scatter::getDepthTextureMemoryhandle() {
