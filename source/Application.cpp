@@ -119,7 +119,7 @@ void VulkanApplication::init(uint32_t width, uint32_t height) {
     shadowSequence.pushData.inverseViewProjection = glm::inverse(renderSequence.uniforms.projection * renderSequence.uniforms.view);
     
     // init both render sequences
-    shadowSequence.init(device.device, device.allocator, device.physicalDevice, shaderManager, extent);
+    shadowSequence.init(device.device, device.allocator, device.physicalDevice, shaderManager);
     VkPhysicalDeviceMemoryProperties memoryProperties;
     vkGetPhysicalDeviceMemoryProperties(device.physicalDevice, &memoryProperties);
     shadowSequence.createImages(device.device, extent, &memoryProperties);

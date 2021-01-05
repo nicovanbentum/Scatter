@@ -27,7 +27,7 @@ struct BufferDescription {
 class Scatter {
 public:
     // init API
-    void init(uint32_t width, uint32_t height);
+    void init();
 
     // vertex input API
     void setVertexStride(uint32_t stride);
@@ -60,6 +60,7 @@ public:
     uint64_t addMesh(void* vertices, void* indices, unsigned int vertexCount, unsigned int indexCount);
     void destroyMesh(uint64_t handle);
     void addInstance(uint64_t handle, float* transform);
+
     void clearInstances();
     void build();
 

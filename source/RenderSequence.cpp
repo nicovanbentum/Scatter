@@ -660,7 +660,7 @@ void RayTracedShadowsSequence::createSbtTable(VkDevice device, VmaAllocator allo
     }
 }
 
-void RayTracedShadowsSequence::init(VkDevice device, VmaAllocator allocator, VkPhysicalDevice pdevice, VulkanShaderManager& shaderManager, VkExtent2D extent) {
+void RayTracedShadowsSequence::init(VkDevice device, VmaAllocator allocator, VkPhysicalDevice pdevice, VulkanShaderManager& shaderManager) {
     createPipeline(device, shaderManager);
 
     // get physical device memory and rtx properties

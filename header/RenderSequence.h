@@ -66,7 +66,7 @@ public:
     HANDLE getDepthTextureMemoryHandle(VkDevice device);
     HANDLE getShadowTextureMemoryHandle(VkDevice device);
 
-    void init(VkDevice device, VmaAllocator allocator, VkPhysicalDevice pdevice, VulkanShaderManager& shaderManager, VkExtent2D extent);
+    void init(VkDevice device, VmaAllocator allocator, VkPhysicalDevice pdevice, VulkanShaderManager& shaderManager);
     void destroy(VkDevice device, VmaAllocator allocator, VkDescriptorPool descriptorPool);
 
     void createImages(VkDevice device, VkExtent2D extent, VkPhysicalDeviceMemoryProperties* memProperties);

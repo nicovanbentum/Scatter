@@ -12,10 +12,10 @@ void Scatter::setInverseViewProjectionMatrix(float* matrix) {
     memcpy(glm::value_ptr(rtx.pushData.inverseViewProjection), matrix, sizeof(glm::mat4));
 }
 
-void Scatter::init(uint32_t width, uint32_t height) {
+void Scatter::init() {
     device.init();
     shaderManager.init(device.device);
-    rtx.init(device.device, device.allocator, device.physicalDevice, shaderManager, { width, height });
+    rtx.init(device.device, device.allocator, device.physicalDevice, shaderManager);
     rtx.createDescriptorSets(device.device, device.descriptorPool);
 
     VkSemaphoreCreateInfo semaphoreInfo = {};
@@ -231,6 +231,8 @@ void Scatter::addInstance(uint64_t handle, float* transform) {
 }
 
 void Scatter::build() {
+    if (instances.empty()) return;
+
     if (TLAS.as != nullptr) {
         TLAS.destroy(device.device, device.allocator);
     }
@@ -248,6 +250,8 @@ void Scatter::build() {
 }
 
 void Scatter::destroyMesh(uint64_t handle) {
+    if (bottomLevels.empty()) return;
+
     auto it = std::find_if(bottomLevels.begin(), bottomLevels.end(), [&](auto& blas) -> bool {
         return blas.handle == handle;
     });
