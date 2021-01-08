@@ -1,5 +1,5 @@
 # Scatter
-Vulkan RTX in C++
+Ray traced hard shadows for OpenGL using Vulkan RTX and Windows memory handles.
 
 ## Build
 
