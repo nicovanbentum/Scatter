@@ -34,17 +34,17 @@ Instance::Instance() {
         createInfo.pNext = nullptr;
     }
 
-    // synchronization validation layers, pls save me
-    if (IS_DEBUG) {
-        std::vector<VkValidationFeatureEnableEXT> enables = {
-            VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
-        };
-        VkValidationFeaturesEXT features = {};
-        features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
-        features.enabledValidationFeatureCount = static_cast<uint32_t>(enables.size());
-        features.pEnabledValidationFeatures = enables.data();
-        createInfo.pNext = &features;
-    }
+    //// synchronization validation layers, pls save me
+    //if (IS_DEBUG) {
+    //    std::vector<VkValidationFeatureEnableEXT> enables = {
+    //        VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT
+    //    };
+    //    VkValidationFeaturesEXT features = {};
+    //    features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+    //    features.enabledValidationFeatureCount = static_cast<uint32_t>(enables.size());
+    //    features.pEnabledValidationFeatures = enables.data();
+    //    createInfo.pNext = &features;
+    //}
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
         throw std::runtime_error("failed to create instance! \n");
