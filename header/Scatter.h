@@ -1,31 +1,39 @@
 #pragma once
 
-#include "RenderSequence.h"
-#include "AccelStructure.h"
+#ifdef SCATTER_EXPORT
+#define SCATTER_API __declspec(dllexport)
+#else
+#define SCATTER_API __declspec(dllimport)
+#endif
 
 namespace scatter {
 
-enum class VertexFormat : unsigned int {
+enum class SCATTER_API VertexFormat : unsigned int {
     R32_SFLOAT = 100,
     R32G32_SFLOAT = 103,
     R32G32B32_SFLOAT = 106,
     R32G32B32A32_SFLOAT = 109
 };
 
-enum class IndexFormat : unsigned int {
+enum class SCATTER_API IndexFormat : unsigned int {
     UINT16 = 0,
     UINT32 = 1
 };
 
-struct BufferDescription {
+struct SCATTER_API BufferDescription {
     uint32_t vertexOffset = 0;
     uint32_t vertexStride = sizeof(float) * 3;
     VertexFormat vertexFormat = VertexFormat::R32G32B32_SFLOAT;
     IndexFormat indexFormat = IndexFormat::UINT32;
 };
 
-class Scatter {
+class SCATTER_API Scatter {
 public:
+    Scatter();
+    ~Scatter() = default;
+    Scatter(Scatter&&) noexcept = default;
+    Scatter& operator=(Scatter&&) noexcept = default;
+
     // init API
     void init();
 
@@ -40,14 +48,14 @@ public:
     void setInverseViewProjectionMatrix(float* matrix);
 
     // handle API
-    HANDLE getShadowTextureMemoryHandle();
-    HANDLE getDepthTextureMemoryhandle();
+    void* getShadowTextureMemoryHandle();
+    void* getDepthTextureMemoryhandle();
     
     size_t getShadowTextureMemorySize();
     size_t getDepthTextureMemorySize();
 
-    HANDLE getReadySemaphoreHandle();
-    HANDLE getDoneSemaphoreHandle();
+    void* getReadySemaphoreHandle();
+    void* getDoneSemaphoreHandle();
 
     // submit API
     void submit(uint32_t width, uint32_t height);
@@ -67,17 +75,8 @@ public:
     void destroy();
 
 private:
-    VkFence cpuFence;
-    VulkanDevice device;
-    RayTracedShadowsSequence rtx;
-    VulkanShaderManager shaderManager;
-    VkSemaphore readySemaphore, doneSemaphore;
-
-    // geometry stuff
-    BufferDescription attribDesc;
-    std::vector<BottomLevelAS> bottomLevels;
-    TopLevelAS TLAS;
-    std::vector< VkAccelerationStructureInstanceNV> instances;
+    class Impl;
+    Impl* pimpl;
 };
 
 }
