@@ -30,7 +30,7 @@ struct SCATTER_API BufferDescription {
 class SCATTER_API Scatter {
 public:
     Scatter();
-    ~Scatter() = default;
+    ~Scatter();
     Scatter(Scatter&&) noexcept = default;
     Scatter& operator=(Scatter&&) noexcept = default;
 
