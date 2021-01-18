@@ -28,7 +28,6 @@
 #include <cstdint>
 #include <unordered_map>
 #include <filesystem>
-#include <variant>
 
 #include "vulkan/vulkan.h"
 #include "vulkan/vulkan_win32.h"

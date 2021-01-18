@@ -1,9 +1,6 @@
 #pragma once
 
 #include "Extensions.h"
-#include <optional>
-
-struct GLFWwindow;
 
 namespace scatter {
 
@@ -30,6 +27,7 @@ class VulkanDevice {
     friend struct BottomLevelAS;
     friend struct TopLevelAS;
     friend class Scatter;
+
 public:
     void init();
     void destroy();

@@ -18,12 +18,6 @@
     <ClCompile Include="source\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\HelloTriangleApplication.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,22 +27,10 @@
     <ClCompile Include="source\ShaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\Swapchain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\Application.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\source_impl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Object.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\Vertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\VulkanBuffer.cpp">
@@ -60,9 +42,6 @@
     <ClCompile Include="source\Extensions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\NewDevice.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\Scatter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,31 +50,16 @@
     <ClInclude Include="header\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\HelloTriangleApplication.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\Device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\RenderSequence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\Swapchain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="header\ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\Texture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\Application.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\Object.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="header\Vertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\VulkanBuffer.h">
@@ -113,15 +77,8 @@
     <ClInclude Include="header\Scatter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="header\NewDevice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader\shader.frag" />
-    <None Include="shader\shader.vert" />
-    <None Include="shader\triangle.frag" />
-    <None Include="shader\triangle.vert" />
     <None Include="shader\raytrace.rgen" />
   </ItemGroup>
 </Project>

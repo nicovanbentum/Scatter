@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "Device.h"
-#include "Swapchain.h"
 #include "Extensions.h"
 
 #ifdef NDEBUG

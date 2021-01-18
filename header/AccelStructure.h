@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Object.h"
 #include "Extensions.h"
 #include "Device.h"
 

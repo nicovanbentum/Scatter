@@ -4,8 +4,6 @@
 #define VK_LOAD_FN(device, x) PFN_##x(vkGetDeviceProcAddr(device, #x))
 #endif
 
-#include "vulkan/vulkan.h"
-
 namespace scatter {
 
 class vk_nv_ray_tracing {
