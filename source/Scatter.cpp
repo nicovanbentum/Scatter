@@ -144,6 +144,8 @@ public:
         if (vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, cpuFence) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer! \n");
         }
+
+        vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
     }
 
     void createTextures(uint32_t width, uint32_t height) {
