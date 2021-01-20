@@ -9,7 +9,7 @@ Ray traced hard shadows for OpenGL using Vulkan RTX and Windows memory handles.
     
 ## How does it work?
 Scatter is a small Vulkan library that produces a screen space shadow texture based on a single directional light. As for now, the technique is 1spp hard shadows.
-It requires a rendered depth buffer as it reconstructs world positions using depth and view-projection matrices. It ray traces from world position towards the light and checks for blocking geometry. For this reason Vulkan needs to know about your scene's geometry and build an acceleration structure out of it. Scatter provides a few simple functions to set this up. 
+It requires a rendered depth buffer as it reconstructs world positions using depth and view-projection matrices. It ray traces from world position towards the light and checks for blocking geometry. For this reason Vulkan needs to know about your scene's geometry and build an acceleration structure out of it. Scatter provides a few simple functions to set this up. It provides an interface for getting Win32 handles to the result, which can be imported into OpenGL at runtime.
 
 ## The API
 
