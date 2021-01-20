@@ -19,25 +19,26 @@ This one is pretty simple, create an instance of the ```scatter::Scatter``` clas
 ### Vertex Input
 Scatter works on triangle meshes so you'll need to tell Scatter what that data looks like.
 let's say your vertex layout is a simple struct:
-``` struct Vertex {
-  float2 texcoord;
-  float3 position;
-  float3 normal;
-} 
-```
+
+    struct Vertex {
+      float2 texcoord;
+      float3 position;
+      float3 normal;
+    } 
+
 
 To tell Scatter how it should extract the positional data from this you call:
 
-``` 
-scatter.setVertexOffset(offsetof(Vertex, position));
-scatter.setVertexStride(sizeof(Vertex));
-scatter.setVertexFormat(VertexFormat::R32G32B32_SFLOAT);
-```
+
+    scatter.setVertexOffset(offsetof(Vertex, position));
+    scatter.setVertexStride(sizeof(Vertex));
+    scatter.setVertexFormat(VertexFormat::R32G32B32_SFLOAT);
+
 
 Indices are either 16 or 32 bit unsigned integers:
-``` 
-scatter.setIndexFormat(IndexFormat::UINT32); 
-```
+
+    scatter.setIndexFormat(IndexFormat::UINT32); 
+
 
 ### Textures
 To interop between Vulkan and OpenGL we need to create all textures are created in Vulkan and exported to OpenGL.
@@ -45,44 +46,39 @@ Scatter creates these textures internally when you call ```createTextures(width,
 When the application ends or you want to resize based on window dimensions you can call ```destroyTextures()``` to invalidate the textures **and** handles.
 Importing to OpenGL requires the handles:
 
-```
-auto depthHandle = scatter.getDepthTextureMemoryhandle();
-const auto depthSize = scatter.getDepthTextureMemorySize();
+    auto depthHandle = scatter.getDepthTextureMemoryhandle();
+    const auto depthSize = scatter.getDepthTextureMemorySize();
 
-auto shadowHandle = scatter.getShadowTextureMemoryHandle();
-const auto shadowSize = scatter.getShadowTextureMemorySize();
-```
+    auto shadowHandle = scatter.getShadowTextureMemoryHandle();
+    const auto shadowSize = scatter.getShadowTextureMemorySize();
+
 
 You will need support for the ```gl_ext_memory_object_win32``` extension to create the textures, example:
 
-```
-GLuint depthTextureMemory;
-glCreateMemoryObjectsEXT(1, &depthTextureMemory);
-glImportMemoryWin32HandleEXT(depthTextureMemory, depthSize, GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, depthHandle);
-```
+    GLuint depthTextureMemory;
+    glCreateMemoryObjectsEXT(1, &depthTextureMemory);
+    glImportMemoryWin32HandleEXT(depthTextureMemory, depthSize, GL_HANDLE_TYPE_OPAQUE_WIN32_EXT, depthHandle);
 
 and assign it to your texture using
 
-```
-unsigned int depthTexture;
-glCreateTextures(GL_TEXTURE_2D, 1, &depthTexture);
-glTextureStorageMem2DEXT(depthTexture, 1, GL_DEPTH_COMPONENT32F, width, height, depthTextureMemory, 0);
-```
+    unsigned int depthTexture;
+    glCreateTextures(GL_TEXTURE_2D, 1, &depthTexture);
+    glTextureStorageMem2DEXT(depthTexture, 1, GL_DEPTH_COMPONENT32F, width, height, depthTextureMemory, 0);
 
 _Note:_ the formats should be `GL_DEPTH_COMPONENT32F` for depth and `GL_RGBA8` for the shadow texture. They correspond to the format of the Vulkan textures.
 We are aware that this isn't ideal, the user should be able to specify formats in the future.
 
 ### Acceleration Structure
 Ray tracing extensions build an internal bounding hierarchy volume out of the triangles you give it. To keep interop dependencies to a minimum and maintain a clean API its implemented as 5 functions. First step is to add meshes:
-```
-for(auto mesh : scene) {
-  uin64_t handle = scatter.addMesh(mesh.vertices.data(), mesh.vertices.size(), mesh.indices.data(), mesh.indices.size());
-}
-```
 
-You'll need the returned handle to remove/update meshes and creating the final structure.
-Next is instancing and building. You can instantiate meshes using a single transformation matrix.
-This part has negligible performance impact so do it every frame!
+    for(auto mesh : scene) {
+      uin64_t handle = scatter.addMesh(mesh.vertices.data(), mesh.vertices.size(), mesh.indices.data(), mesh.indices.size());
+    }
+
+
+You'll need the returned handle to remove/update meshes and to create the final structure.
+You can instantiate meshes using a single transformation matrix.
+Instantiation has negligible performance impact so do it every frame!
 **__note__**: Vulkan expects row-major matrices so make sure to transpose if you're using a library like GLM.
 Don't worry about the pointer argument, the API performs a `memcpy` for 16 floats so you can use local variables.
 
@@ -97,7 +93,7 @@ Don't worry about the pointer argument, the API performs a `memcpy` for 16 float
 To remove meshes call `destroyMesh(handle)`, possibly re-adding them for e.g animated vertices.
 
 Do note that this is a naive implementation that creates Vulkan buffers on-the-fly and only keeps the final acceleration structure around.
-It also doesn't perform acceleration structure updates but recreates them instead.
+It also doesn't perform acceleration structure updates, only full rebuilds.
 
 ### Synchronization
 GPUs are highly parallel and OpenGL does whatever it wants, whenever it wants. You'll need to create two OpenGL semaphores to tell the GPU when Scatter can start and signal back when it is done. Much like textures, Vulkan creates and exports the objects:
@@ -121,7 +117,7 @@ To set the light direction:
     
     scatter.setLightDirection(light.direction.x, light.direction.y, light.direction.z);
     
-Vulkan requires explicit image layout transfers, and so we need to do this in OpenGL as well. 
+Vulkan requires explicit image layout transfers so we need to do this in OpenGL as well. 
 Since we don't really care about the initial layout we set it to general.
 Scatter's submission waits for the exported ready semaphore to be signaled, so we do that now:
     
