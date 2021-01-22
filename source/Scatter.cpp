@@ -2,6 +2,7 @@
 #include "Scatter.h"
 #include "RenderSequence.h"
 #include "AccelStructure.h"
+#include <queue>
 
 namespace scatter {
 
@@ -109,7 +110,8 @@ public:
 
         vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
 
-        auto commandBuffer = device.createCommandBuffer();
+        commandBuffers.push(device.createCommandBuffer());
+        auto& commandBuffer = commandBuffers.back();
 
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -145,7 +147,10 @@ public:
             throw std::runtime_error("failed to submit draw command buffer! \n");
         }
 
-        vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffer);
+        if (!commandBuffers.size() >= 2) {
+            vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffers.front());
+            commandBuffers.pop();
+        }
     }
 
     void createTextures(uint32_t width, uint32_t height) {
@@ -301,6 +306,7 @@ private:
     RayTracedShadowsSequence rtx;
     VulkanShaderManager shaderManager;
     VkSemaphore readySemaphore, doneSemaphore;
+    std::queue<VkCommandBuffer> commandBuffers;
 
     // geometry stuff
     BufferDescription attribDesc;
