@@ -151,3 +151,8 @@ From here you can bind the shadow image to a shader and apply it to lighting cal
 - Static link against Scatter.lib
 - Copy Scatter.dll to the executable directory
 - `#include "Scatter.h"`
+
+## Documentation
+
+The docs are included with the repository, but only the `Scatter.h` header file is documented using Doxygen. 
+If someone knows an easy way to generate doxygen for a single file, let us know.
