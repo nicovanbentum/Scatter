@@ -38,6 +38,9 @@ public:
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         vkCreateFence(device.device, &fenceInfo, nullptr, &cpuFence);
+
+        commandBuffers[0] = device.createCommandBuffer();
+        commandBuffers[1] = device.createCommandBuffer();
     }
 
     // vertex input API
@@ -110,8 +113,8 @@ public:
 
         vkGetPhysicalDeviceProperties2(device.physicalDevice, &pdProps);
 
-        commandBuffers.push(device.createCommandBuffer());
-        auto& commandBuffer = commandBuffers.back();
+        auto& commandBuffer = commandBuffers[activeCommandBuffer];
+        activeCommandBuffer = !activeCommandBuffer;
 
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -145,11 +148,6 @@ public:
 
         if (vkQueueSubmit(device.graphicsQueue, 1, &submitInfo, cpuFence) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer! \n");
-        }
-
-        if (!commandBuffers.size() >= 2) {
-            vkFreeCommandBuffers(device.device, device.commandPool, 1, &commandBuffers.front());
-            commandBuffers.pop();
         }
     }
 
@@ -291,6 +289,8 @@ public:
 
         rtx.destroy(device.device, device.allocator, device.descriptorPool);
 
+        vkFreeCommandBuffers(device.device, device.commandPool, commandBuffers.size(), commandBuffers.data());
+
         vkDestroyFence(device.device, cpuFence, nullptr);
 
         vkDestroySemaphore(device.device, readySemaphore, nullptr);
@@ -306,7 +306,9 @@ private:
     RayTracedShadowsSequence rtx;
     VulkanShaderManager shaderManager;
     VkSemaphore readySemaphore, doneSemaphore;
-    std::queue<VkCommandBuffer> commandBuffers;
+
+    unsigned int activeCommandBuffer = 0;
+    std::array<VkCommandBuffer, 2> commandBuffers;
 
     // geometry stuff
     BufferDescription attribDesc;
