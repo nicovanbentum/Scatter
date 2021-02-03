@@ -1,0 +1,14 @@
+{
+	"name": "scatter",
+	"version-string": "1.0",
+    "dependencies": [
+        {
+            "name": "glfw3",
+            "platform": "windows & static"
+        },
+        {
+            "name": "glm",
+            "platform": "windows & static"
+        }
+    ]
+}
