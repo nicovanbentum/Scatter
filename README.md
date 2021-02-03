@@ -141,9 +141,10 @@ From here you can bind the shadow image to a shader and apply it to lighting cal
 
 - Make sure you have the Vulkan SDK installed
 - Download and copy over the debug libraries into your SDK version ([link](https://files.lunarg.com/))
+- Install [vcpkg](https://github.com/microsoft/vcpkg) and enable user wide integration.
+
 - ```git clone``` this repository or use a Git client
 - Make sure you have the latest submodules using ``` git submodule update --recursive --init```
-- run the init.bat file in \external\
 - Build the Visual Studio solution
 
 ## Linking
