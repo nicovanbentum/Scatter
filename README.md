@@ -25,7 +25,7 @@ struct Vertex {
   float2 texcoord;
   float3 position;
   float3 color;
-} 
+};
 ```
 
 
