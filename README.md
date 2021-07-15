@@ -43,7 +43,7 @@ scatter.setIndexFormat(IndexFormat::UINT32);
 ```
 
 ### Textures
-To interop between Vulkan and OpenGL we need to create all textures are created in Vulkan and exported to OpenGL.
+To interop between Vulkan and OpenGL all textures are created in Vulkan and exported to OpenGL.
 Scatter creates these textures internally when you call ```createTextures(width, height)```. 
 When the application ends or you want to resize based on window dimensions you can call ```destroyTextures()``` to invalidate the textures **and** handles.
 Importing to OpenGL requires the handles:
@@ -71,7 +71,7 @@ _Note:_ the formats should be `GL_DEPTH_COMPONENT32F` for depth and `GL_RGBA8` f
 We are aware that this isn't ideal, the user should be able to specify formats in the future.
 
 ### Acceleration Structure
-Ray tracing extensions build an internal bounding hierarchy volume out of the triangles you give it. To keep interop dependencies to a minimum and maintain a clean API its implemented as 5 functions. First step is to add meshes:
+Ray tracing extensions build an internal bounding volume hierarchy out of the triangles you give it. To keep interop dependencies to a minimum and maintain a clean API its implemented as 5 functions. First step is to add meshes:
 ``` c++
 for(auto mesh : scene) {
   uin64_t handle = scatter.addMesh(mesh.vertices.data(), mesh.vertices.size(), mesh.indices.data(), mesh.indices.size());
